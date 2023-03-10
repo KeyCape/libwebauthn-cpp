@@ -36,6 +36,22 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
                      &clientDataJSON, &err)) {
     throw std::invalid_argument{err};
   }
+
+  if(!this->type) {
+    this->type = std::make_shared<std::string>();
+  }
+
+  if(!this->challenge) {
+    this->challenge = std::make_shared<std::string>();
+  }
+
+  if(!this->origin) {
+    this->origin = std::make_shared<std::string>();
+  }
+
+  *this->type = clientDataJSON["type"].asString();
+  *this->challenge = clientDataJSON["challenge"].asString();
+  *this->origin = clientDataJSON["origin"].asString();
 }
 const std::shared_ptr<std::string> AuthenticatorResponse::getType() {
   return this->type;
