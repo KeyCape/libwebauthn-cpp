@@ -27,6 +27,7 @@ private:
   std::shared_ptr<std::string> userHandle;
 
 public:
+  AuthenticatorAssertionResponse();
   AuthenticatorAssertionResponse(
       std::shared_ptr<AuthenticatorData> authenticatorData,
       std::shared_ptr<std::vector<uint8_t>> signature,

@@ -1,5 +1,7 @@
 #include "AuthenticatorAssertionResponse.h"
 
+AuthenticatorAssertionResponse::AuthenticatorAssertionResponse() {}
+
 AuthenticatorAssertionResponse::AuthenticatorAssertionResponse(
     std::shared_ptr<AuthenticatorData> authenticatorData,
     std::shared_ptr<std::vector<uint8_t>> signature,
@@ -23,6 +25,10 @@ AuthenticatorAssertionResponse::getSignature() {
   return this->signature;
 }
 
+const std::shared_ptr<std::string>
+AuthenticatorAssertionResponse::getUserHandle() {
+  return this->userHandle;
+}
 /**
  * @brief Parse and verify json
  *
@@ -47,9 +53,11 @@ void AuthenticatorAssertionResponse::fromJson(
   this->signature =
       std::make_shared<std::vector<uint8_t>>(tmp.begin(), tmp.end());
 
-  if ((*json)["response"].isMember("userHandle")) {
+  if ((*json)["response"].isMember("userHandle") &&
+      !(*json)["response"]["userHandle"].isNull()) {
     DLOG(INFO) << "UserHandle is present";
-    this->userHandle = std::make_shared<std::string>((*json)["response"]["userHandle"].asString());
+    this->userHandle = std::make_shared<std::string>(
+        (*json)["response"]["userHandle"].asString());
     /*tmp.resize(0);
     tmp = drogon::utils::base64Decode(
         (*json)["response"]["userHandle"].asString());
