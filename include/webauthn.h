@@ -19,36 +19,37 @@
 #include <type_traits>
 #include <utility>
 
+/**
+ * @brief Webauthn policy
+ */
+struct Policy {
+  /**
+   * @brief Timeout in milliseconds
+   *
+   * This OPTIONAL member specifies a time, in milliseconds, that the Relying
+   * Party is willing to wait for the call to complete. This is treated as a
+   * hint, and MAY be overridden by the client.
+   */
+  std::shared_ptr<unsigned long> timeout;
+  std::shared_ptr<UserVerificationRequirement> userVerification = nullptr;
+  std::shared_ptr<AttestationConveyancePreference> attestation = nullptr;
+  std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>>
+      attStmtFmts = nullptr;
+};
+
 template <typename T> class Webauthn {
 private:
   std::shared_ptr<std::string> rp_name;
   std::shared_ptr<std::string> rp_id;
   std::shared_ptr<std::vector<unsigned char>> rp_id_hash;
-  std::shared_ptr<unsigned long> timeout;
-  bool flag_user_verified = false;
-  std::shared_ptr<UserVerificationRequirement> userVerification = nullptr;
-  std::shared_ptr<AttestationConveyancePreference> attestation = nullptr;
-  std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>>
-      attSttmtFmts = nullptr;
+  std::shared_ptr<Policy> policy;
 
   bool validateOrigin(const std::shared_ptr<std::string> originPtr) const;
 
 public:
-  Webauthn();
-  /// @brief Create an instance of a relying party
-  /// @param name This is the name of the relying party
-  /// @param id This is the id of the relying party, which is transfered to the
-  /// WebAgent
-  Webauthn(std::string &&name, std::string &&id);
-  /**
-   * @brief This method returns the PublicKeyCredentialCreationOptions object,
-   * which is requested by the client, to register a new Credential
-   *
-   * @param username The username of the user. This parameter is usally assigned
-   * by the client.
-   * @return std::shared_ptr<PublicKeyCredentialCreationOptions> Is returned to
-   * the client.
-   */
+  Webauthn() = delete;
+  Webauthn(std::shared_ptr<std::string> name, std::shared_ptr<std::string> id,
+           std::shared_ptr<Policy> policy);
   std::shared_ptr<PublicKeyCredentialCreationOptions>
   beginRegistration(std::string &username);
   std::shared_ptr<T> finishRegistration(
@@ -62,43 +63,70 @@ public:
       std::shared_ptr<PublicKeyCredentialRequestOptions> pkeyCredReq,
       std::shared_ptr<std::forward_list<CredentialRecord>> credRec);
   void setRpId(std::string &id);
-  void setRpName(std::string &id);
+  void setRpName(std::string &name);
   ~Webauthn();
 };
 
-template <typename T> Webauthn<T>::Webauthn() {
+/**
+ * @brief Create an instance of a relying party.
+ * @param name This is the name of the relying party.
+ * @param id This is the id of the relying party, which is transfered to the
+ * WebAgent.
+ * @param policy This parameter is OPTIONAL. Use this to enforce the security.
+ */
+template <typename T>
+Webauthn<T>::Webauthn(std::shared_ptr<std::string> name,
+                      std::shared_ptr<std::string> id,
+                      std::shared_ptr<Policy> policy) {
   static_assert(std::is_base_of_v<CredentialRecord, T>,
                 "The return type of finishRegistration(..) must be a child of "
                 "the class CredentialRecord");
-  if (!this->attSttmtFmts) {
-    LOG(WARNING) << "No AttestationStatementFormatIdentifiers has been "
-                    "specified. Falling back to none";
-    this->attSttmtFmts = std::make_shared<
-        std::forward_list<AttestationStatementFormatIdentifier>>(
-        std::forward_list<AttestationStatementFormatIdentifier>{
-            AttestationStatementFormatIdentifier::none});
+
+  // Initialize empty policy
+  this->policy = policy;
+  if (!this->policy) {
+    this->policy = std::make_shared<Policy>();
   }
 
-  if (!this->attestation) {
-    LOG(WARNING) << "No AttestationConveyancePreference has been specified. "
-                    "Falling back to none";
-    this->attestation = std::make_shared<AttestationConveyancePreference>(
-        AttestationConveyancePreference::none);
+  // Verify policy
+  if (!this->policy->attestation) {
+    LOG(WARNING) << "Missing policy.attestation. Defaulting to none";
+    this->policy->attestation =
+        std::make_shared<AttestationConveyancePreference>(
+            AttestationConveyancePreference::none);
   }
 
-  if (!this->userVerification) {
-    LOG(WARNING) << "No UserVerificationRequirement has been specified. "
-                    "Falling back to preferred";
-    this->userVerification = std::make_shared<UserVerificationRequirement>(
-        UserVerificationRequirement::preferred);
+  if (!this->policy->attStmtFmts) {
+    LOG(WARNING) << "Missing policy.attStmtFmts. Defaulting to []";
+    this->policy->attStmtFmts = std::make_shared<
+        std::forward_list<AttestationStatementFormatIdentifier>>();
   }
+
+  if (!this->policy->userVerification) {
+    LOG(WARNING) << "Missing policy.userVerification. Defaulting to preferred";
+    this->policy->userVerification =
+        std::make_shared<UserVerificationRequirement>(
+            UserVerificationRequirement::preferred);
+  }
+
+  if (!this->policy->timeout) {
+    this->policy->timeout = std::make_shared<unsigned long>(0);
+  }
+
+  if (!name) {
+    LOG(ERROR) << "The relying party name must not be null";
+    throw std::invalid_argument{"The relying party name must not be null"};
+  }
+
+  if (!id) {
+    LOG(ERROR) << "The relying party id must not be null";
+    throw std::invalid_argument{"The relying party id must not be null"};
+  }
+
+  this->setRpName(*name);
+  this->setRpId(*id);
 }
 
-template <typename T>
-Webauthn<T>::Webauthn(std::string &&name, std::string &&id) : Webauthn() {
-  this->setRpName(name);
-  this->setRpId(id);
-}
 /**
  * @brief This method is used to start the registration ceremony of a
  * credential.
@@ -136,7 +164,8 @@ Webauthn<T>::beginRegistration(std::string &username) {
                PublicKeyCredentialParameters{COSEAlgorithmIdentifier::ES256}}));
 
   auto ret = std::make_shared<PublicKeyCredentialCreationOptions>(
-      rp, user, challenge, params, this->attSttmtFmts, this->attestation);
+      rp, user, challenge, params, this->policy->attStmtFmts,
+      this->policy->attestation);
 
   return ret;
 }
@@ -307,8 +336,9 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // registry [IANA-WebAuthn-Registries] established by [RFC8809].
   LOG(INFO) << "Verify that attestation statement format provided by the "
                "client is allowed";
-  if (std::find(this->attSttmtFmts->cbegin(), this->attSttmtFmts->cend(),
-                *response->getFmt()) == this->attSttmtFmts->cend()) {
+  if (std::find(this->policy->attStmtFmts->cbegin(),
+                this->policy->attStmtFmts->cend(),
+                *response->getFmt()) == this->policy->attStmtFmts->cend()) {
     LOG(WARNING) << "The attestation statement format is not allowed";
     DLOG(WARNING) << "The attestation statement format provided by the client "
                      "is not allowed fmt: "
@@ -405,8 +435,8 @@ std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
       });
 
   return std::make_shared<PublicKeyCredentialRequestOptions>(
-      challenge, this->timeout, this->rp_id, allowCredentials,
-      this->userVerification, this->attestation, nullptr);
+      challenge, this->policy->timeout, this->rp_id, allowCredentials,
+      this->policy->userVerification, this->policy->attestation, nullptr);
 }
 
 /**
@@ -580,7 +610,9 @@ std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
 
   // §7.2.15 If the Relying Party requires user verification for this assertion,
   // verify that the UV(User Verified) bit of the flags in authData is set.
-  if (this->flag_user_verified && !authDataFlags->test(2)) {
+  if (*this->policy->userVerification ==
+          UserVerificationRequirement::required &&
+      !authDataFlags->test(2)) {
     LOG(WARNING) << "The RP requires that the User Verification flag is set to "
                     "true, but it's not";
     throw std::invalid_argument{"The RP requires that the User Verification "
