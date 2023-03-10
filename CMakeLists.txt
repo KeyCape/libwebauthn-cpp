@@ -9,5 +9,6 @@ add_library(webauthn STATIC
     include/PublicKeyCredentialCreationOptions.h src/PublicKeyCredentialCreationOptions.cpp
     include/PublicKeyCredentialParameters.h src/PublicKeyCredentialParameters.cpp
     include/Challenge.h src/Challenge.cpp
+    include/PublicKeyCredentialDescriptor.h src/PublicKeyCredentialDescriptor.cpp
     )
 target_include_directories(webauthn PUBLIC include)
