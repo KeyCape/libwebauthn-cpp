@@ -33,5 +33,6 @@ public:
   AuthenticatorAttestationResponse(std::vector<uint8_t> &&attObj,
                                    std::vector<uint8_t> &&clientDataJSON);
   virtual void fromJson(const std::shared_ptr<Json::Value> json) override;
+  const std::shared_ptr<AuthenticatorData> getAuthData() const;
   ~AuthenticatorAttestationResponse();
 };

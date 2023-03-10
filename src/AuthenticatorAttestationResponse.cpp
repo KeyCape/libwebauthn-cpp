@@ -161,4 +161,9 @@ void AuthenticatorAttestationResponse::fromJson(
   // Call the overridden method to parse the clientDataJson
   AuthenticatorResponse::fromJson(json);
 }
+const std::shared_ptr<AuthenticatorData>
+AuthenticatorAttestationResponse::getAuthData() const {
+  return this->authData;
+}
+
 AuthenticatorAttestationResponse::~AuthenticatorAttestationResponse() {}
