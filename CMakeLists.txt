@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(webauthn VERSION 0.1)
 
+find_package(Drogon CONFIG REQUIRED)
+
 add_library(webauthn STATIC 
     include/webauthn.h
     include/IJsonSerialize.h
@@ -42,6 +44,7 @@ target_link_libraries(
   webauthn
   jsoncpp
   GTest::gtest_main
+  Drogon::Drogon
 )
 
 
