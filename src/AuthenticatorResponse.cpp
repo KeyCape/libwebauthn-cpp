@@ -23,14 +23,13 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
   std::string tmp = (*json)["response"]["clientDataJSON"].asString();
   DLOG(INFO) << "clientDataJSON: " << tmp;
 
-  this->clientDataJSON.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), this->clientDataJSON.begin(),
-                 [](const auto &t) { return t; });
 
   LOG(INFO) << "Decode clientDataJSON";
   // Decode clientDataJSON
   std::string decodedJson = drogon::utils::base64Decode(tmp);
 
+  std::transform(decodedJson.begin(), decodedJson.end(), std::back_inserter(this->clientDataJSON),
+                 [](const auto &t) { return t; });
   LOG(INFO) << "Parse the decoded object to JSON";
   std::string err;
   Json::Value clientDataJSON;
