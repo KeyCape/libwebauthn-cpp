@@ -64,6 +64,7 @@ add_library(webauthn STATIC
     include/AttestedCredentialData.h src/AttestedCredentialData.cpp
     include/PublicKeyCredentialRequestOptions.h src/PublicKeyCredentialRequestOptions.cpp
     include/AuthenticatorAssertionResponse.h src/AuthenticatorAssertionResponse.cpp
+    include/AttestationConveyancePreference.h src src/AttestationConveyancePreference.cpp
 )
 # Has to be set to add compatibility, so that this project can be added via add_subdirectory()
 add_dependencies(webauthn tinycbor)
