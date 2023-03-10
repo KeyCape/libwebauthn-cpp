@@ -3,9 +3,9 @@
 #include "AttestedCredentialData.h"
 
 class CredentialRecord {
-protected:
+public:
   PublicKeyCredentialType type;
-  std::string id;
+  std::shared_ptr<std::string> id;
   uint32_t signCount;
   std::shared_ptr<PublicKey> publicKey;
   //! Backup eligible
@@ -15,7 +15,6 @@ protected:
   /*! https://w3c.github.io/webauthn/#backup-state*/
   bool bs;
 
-public:
   CredentialRecord();
   ~CredentialRecord();
 };
