@@ -4,6 +4,9 @@
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
 #include "Base64Url.h"
+#include "jsoncons/json.hpp"
+#include "jsoncons_ext/cbor/decode_cbor.hpp"
+#include "jsoncons_ext/jsonpath/jsonpath.hpp"
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -31,7 +34,7 @@ public:
    */
   std::shared_ptr<PublicKeyCredentialCreationOptions>
   beginRegistration(std::string &username);
-  std::shared_ptr<T> finishRegistration(std::shared_ptr<Json::Value> v);
+  std::shared_ptr<T> finishRegistration(std::shared_ptr<PublicKeyCredentialCreationOptions> options, std::shared_ptr<Json::Value> request);
   ~Webauthn();
 };
 
@@ -92,8 +95,18 @@ Webauthn<T>::beginRegistration(std::string &username) {
  */
 template <typename T>
 std::shared_ptr<T>
-Webauthn<T>::finishRegistration(std::shared_ptr<Json::Value> v) {
+Webauthn<T>::finishRegistration(std::shared_ptr<PublicKeyCredentialCreationOptions> options, std::shared_ptr<Json::Value> request) {
   auto ret = std::make_shared<T>();
+
+/*std::shared_ptr<std::string> data = std::make_shared<std::string>("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViYSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NdAAAAAAAAAAAAAAAAAAAAAAAAAAAAFNphln4gWvo48ah9pArJo6t7wP36pQECAyYgASFYIPcg7P9N6wJZ8Z0wNNlat0oFk_VfdAbnXIirqZ6CnKAGIlgglwtVKdI7VEO18BQWmm2PtCjy1lNm8TGxAmlaZ6z4j-g");
+  Base64Url::decode(data);
+  jsoncons::json j = jsoncons::cbor::decode_cbor<jsoncons::json>(data->begin(), data->end());
+
+  std::stringstream str;
+  str << jsoncons::pretty_print(j);
+
+  LOG_DEBUG << "CBOR: " << str.str();
+*/
 
   return ret;
 }
