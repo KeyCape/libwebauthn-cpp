@@ -1,10 +1,12 @@
 #pragma once
 #include "AuthenticatorAttestationResponse.h"
+#include "PublicKeyCredentialDescriptor.h"
 #include "IJsonDeserialize.h"
 #include <memory>
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <utility>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
 
