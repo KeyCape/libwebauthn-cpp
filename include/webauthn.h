@@ -16,6 +16,9 @@ private:
   std::string rp_name;
   std::string rp_id;
   std::shared_ptr<std::basic_string<unsigned char>> rp_id_hash;
+  std::vector<std::string> fmtList = {
+      "none", "packed"}; // A vector which contains the allowed attestation
+                         // statement formats.
 
   bool validateOrigin(const std::shared_ptr<std::string> originPtr) const;
 
@@ -242,6 +245,55 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
     throw std::invalid_argument{
         "The given COSEAlgorithmIdentifier isn't allowed"};
   }
+
+  // §7.1.18 Verify that the values of the client extension outputs in
+  // clientExtensionResults and the authenticator extension outputs in the
+  // extensions in authData are as expected, considering the client extension
+  // input values that were given in options.extensions and any specific policy
+  // of the Relying Party regarding unsolicited extensions, i.e., those that
+  // were not specified as part of options.extensions. In the general case, the
+  // meaning of \"are as expected\" is specific to the Relying Party and which
+  // extensions are in use.
+  // In this case we just ignore them.
+
+  // §7.1.19 Determine the attestation statement format by performing a USASCII
+  // case-sensitive match on fmt against the set of supported WebAuthn
+  // Attestation Statement Format Identifier values. An up-to-date list of
+  // registered WebAuthn Attestation Statement Format Identifier values is
+  // maintained in the IANA "WebAuthn Attestation Statement Format Identifiers"
+  // registry [IANA-WebAuthn-Registries] established by [RFC8809].
+  LOG(INFO) << "Verify that attestation statement format provided by the "
+               "client is allowed";
+  if(std::find(this->fmtList.cbegin(), this->fmtList.cend(), *response->getFmt()) == this->fmtList.cend()) {
+    LOG(WARNING) << "The attestation statement format is not allowed";
+    DLOG(WARNING) << "The attestation statement format provided by the client "
+                     "is not allowed fmt: "
+                  << *response->getFmt();
+    throw std::invalid_argument{
+        "The attestation statement format is not allowed"};
+  }
+
+  // §7.1.20 Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and hash.
+  // TODO
+
+  // §7.1.21 If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
+  // FIDOMetadataService: https://w3c.github.io/webauthn/#biblio-fidometadataservice
+  // TODO
+
+  // §7.1.22 Assess the attestation trustworthiness using the outputs of the verification procedure in step 19.
+  // TODO
+
+  // §7.1.23 Verify that the credentialId is ≤ 1023 bytes. Credential IDs larger than this many bytes SHOULD cause the RP to fail this registration ceremony.
+  auto attCredData = responseAuthData->getAttestedCredentialData();
+  if(attCredData->getCredentialIdLength() > 1023) {
+    LOG(WARNING) << "The length of the credential id has to be <= 1023";
+    DLOG(WARNING) << "The length of the credential id is: "
+                  << attCredData->getCredentialIdLength();
+    throw std::invalid_argument{
+        "The length of the credential id has to be <= 1023"};
+  }
+
+  // Fill the instance which is inherited from CredentialRecord
 
   return ret;
 }
