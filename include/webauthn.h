@@ -15,7 +15,7 @@ template <typename T> class Webauthn {
 private:
   std::string rp_name;
   std::string rp_id;
-  std::shared_ptr<std::basic_string<unsigned char>> rp_id_hash;
+  std::shared_ptr<std::vector<unsigned char>> rp_id_hash;
   std::vector<std::string> fmtList = {
       "none", "packed"}; // A vector which contains the allowed attestation
                          // statement formats.
@@ -57,7 +57,7 @@ Webauthn<T>::Webauthn(std::string &&name, std::string &&id)
   unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id.data(),
                                   this->rp_id.size(), NULL);
   this->rp_id_hash =
-      std::make_shared<std::basic_string<unsigned char>>(hashPtr, 32);
+      std::make_shared<std::vector<unsigned char>>(hashPtr,hashPtr+32);
 }
 /**
  * @brief This method is used to start the registration ceremony of a
@@ -187,8 +187,9 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
         "The hash length of the relying partys id doesn't match"};
   }
 
-  if (this->rp_id_hash->compare(0, responseAuthDataRpIdHash->size(),
-                                responseAuthDataRpIdHash->data()) != 0) {
+  //if (this->rp_id_hash->compare(0, responseAuthDataRpIdHash->size(),
+  //                              responseAuthDataRpIdHash->data()) != 0) {
+    if(*this->rp_id_hash != *responseAuthDataRpIdHash){
     LOG(WARNING)
         << "The hash of the rp id provided by the web agent dosen't match";
     throw std::invalid_argument{
@@ -294,6 +295,11 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   }
 
   // Fill the instance which is inherited from CredentialRecord
+  // Should be replaced by authData->getType(), but the response is string.
+  ret->type = PublicKeyCredentialType::public_key;
+  ret->id = attCredData->getCredentialId();
+  ret->signCount = responseAuthData->getSignCount();
+  ret->publicKey = attCredData->getPublicKey();
 
   return ret;
 }
