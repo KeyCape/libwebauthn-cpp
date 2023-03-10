@@ -23,6 +23,7 @@ add_library(webauthn STATIC
     include/Base64Url.h src/Base64Url.cpp
     include/AuthenticatorData.h src/AuthenticatorData.cpp
     include/AttestedCredentialData.h src/AttestedCredentialData.cpp
+    include/PublicKeyCredentialRequestOptions.h src/PublicKeyCredentialRequestOptions.cpp
     )
 target_include_directories(webauthn PUBLIC include lib/jsoncons/include lib/tinycbor/src)
 
