@@ -29,17 +29,12 @@ name: build environment
 steps:
 - name: docker build image
   image: plugins/docker
-  environment:
-    GIT_TOKEN:
-      from_secret: GIT_TOKEN
   settings:
     repo: docker.ogkw.de/master-thesis/libwebauthn-cpp
     registry: docker.ogkw.de
     tags: buildenv
     dockerfile: .docker/Dockerfile
     purge: true
-    build_args_from_env:
-      - GIT_TOKEN
 trigger:
   event:
     - custom
