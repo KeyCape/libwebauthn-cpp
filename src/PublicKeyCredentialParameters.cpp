@@ -9,5 +9,12 @@ PublicKeyCredentialParameters::PublicKeyCredentialParameters(
     break;
   }
 }
+std::unique_ptr<Json::Value> PublicKeyCredentialParameters::getJson() {
+  auto json = std::make_unique<Json::Value>(Json::objectValue);
+  (*json)["type"] = this->type;
+  (*json)["alg"] = this->alg;
+
+  return json;
+}
 
 PublicKeyCredentialParameters::~PublicKeyCredentialParameters() {}
