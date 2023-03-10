@@ -1,4 +1,5 @@
 #pragma once
+#include "Base64Url.h"
 #include "IJsonSerialize.h"
 #include <string>
 
@@ -8,11 +9,10 @@
  * This Implementation does not use the transports attribute.
  */
 class PublicKeyCredentialDescriptor : public IJsonSerialize {
-private:
+public:
   std::string type;
   std::string id;
 
-public:
   PublicKeyCredentialDescriptor() = delete;
   PublicKeyCredentialDescriptor(std::string &&type, std::string &&id);
   virtual std::unique_ptr<Json::Value> getJson() override;
