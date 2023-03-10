@@ -14,7 +14,7 @@ protected:
   std::shared_ptr<std::vector<std::uint8_t>> attObj;
   std::shared_ptr<std::vector<std::uint8_t>> clientDataJSON;
 
-  Json::Value json;
+  std::shared_ptr<Json::Value> json;
 
   std::shared_ptr<PublicKeyCredential> pkeyCred;
 
@@ -42,16 +42,16 @@ protected:
     this->clientDataJSON = std::make_shared<std::vector<std::uint8_t>>(
         clientDataJSONTmp.begin(), clientDataJSONTmp.end());
 
-    this->json["id"] = this->id;
-    this->json["rawId"] = this->rawId->data();
-    this->json["type"] = this->type;
-    this->json["response"]["attestationObject"] = this->attObj->data();
-    this->json["response"]["clientDataJSON"] = this->clientDataJSON->data();
-    Json::StreamWriterBuilder builder;
-    builder["indentation"] = "";
-    const std::string jsonInputStr = Json::writeString(builder, this->json);
+    this->json = std::make_shared<Json::Value>();
 
-    this->pkeyCred = PublicKeyCredential{}.fromJson(jsonInputStr);
+    (*this->json)["id"] = this->id;
+    (*this->json)["rawId"] = rawIdTmp;
+    (*this->json)["type"] = this->type;
+    (*this->json)["response"]["attestationObject"] = attObjTmp;
+    (*this->json)["response"]["clientDataJSON"] = clientDataJSONTmp;
+
+    this->pkeyCred = std::make_shared<PublicKeyCredential>();
+    this->pkeyCred->fromJson(this->json);
   }
 
   void TearDown() override {}
