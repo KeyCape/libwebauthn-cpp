@@ -337,6 +337,7 @@ bool Webauthn<T>::validateOrigin(
 }
 
 template <typename T> void Webauthn<T>::setRpId(std::string &id) {
+  this->rp_id = id;
   // Calculate the hash of the relying partys id
   unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id.data(),
                                   this->rp_id.size(), NULL);
