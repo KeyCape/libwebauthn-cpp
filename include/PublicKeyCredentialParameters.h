@@ -36,5 +36,6 @@ public:
       COSEAlgorithmIdentifier &&alg,
       PublicKeyCredentialType &&type = PublicKeyCredentialType::public_key);
       virtual std::unique_ptr<Json::Value> getJson() override;
+      COSEAlgorithmIdentifier getAlgorithm() const;
   ~PublicKeyCredentialParameters();
 };

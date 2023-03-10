@@ -19,4 +19,6 @@ std::unique_ptr<Json::Value> PublicKeyCredentialParameters::getJson() {
   return json;
 }
 
+COSEAlgorithmIdentifier PublicKeyCredentialParameters::getAlgorithm() const { return this->alg; }
+
 PublicKeyCredentialParameters::~PublicKeyCredentialParameters() {}
