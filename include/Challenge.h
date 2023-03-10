@@ -12,6 +12,7 @@ private:
 
 public:
   Challenge();
+  Challenge(std::shared_ptr<std::vector<unsigned char>> challenge);
   std::shared_ptr<std::vector<unsigned char>> getChallenge();
   virtual std::unique_ptr<Json::Value>getJson() override;
   ~Challenge();

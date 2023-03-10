@@ -11,6 +11,8 @@ Challenge::Challenge() {
   this->challenge = std::make_shared<std::vector<unsigned char>>(BYTE_LEN);
   std::generate(this->challenge->begin(), this->challenge->end(), e1);
 }
+Challenge::Challenge(std::shared_ptr<std::vector<unsigned char>> challenge)
+    : challenge{challenge} {}
 
 std::shared_ptr<std::vector<unsigned char>> Challenge::getChallenge() {
   return this->challenge;
