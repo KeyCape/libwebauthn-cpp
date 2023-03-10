@@ -32,11 +32,12 @@ private:
 public:
   PublicKeyCredentialCreationOptions() = delete;
   PublicKeyCredentialCreationOptions(
-      std::shared_ptr<PublicKeyCredentialRpEntity> &rp,
-      std::shared_ptr<PublicKeyCredentialUserEntity> &user,
-      std::shared_ptr<Challenge> &challenge,
+      std::shared_ptr<PublicKeyCredentialRpEntity> rp,
+      std::shared_ptr<PublicKeyCredentialUserEntity> user,
+      std::shared_ptr<Challenge> challenge,
       std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
-          &pubKeyCredParams);
+          pubKeyCredParams);
   virtual std::unique_ptr<Json::Value> getJson() override;
+  static std::shared_ptr<PublicKeyCredentialCreationOptions> fromJson(std::shared_ptr<Json::Value> json);
   ~PublicKeyCredentialCreationOptions();
 };
