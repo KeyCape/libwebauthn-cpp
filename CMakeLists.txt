@@ -3,6 +3,43 @@ project(webauthn VERSION 0.1)
 set(CMAKE_CXX_STANDARD 20)
 find_package(Drogon CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(glog)
+
+# Gtest
+include(FetchContent)
+include(ExternalProject)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
+)
+
+# mbedtls
+set(ENABLE_TESTING OFF CACHE INTERNAL "")
+set(ENABLE_PROGRAMS OFF CACHE INTERNAL "")
+FetchContent_Declare(
+  mbedtls
+  GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+  GIT_TAG        8c89224991adff88d53cd380f42a2baa36f91454 #Mbed TLS 3.3.0
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest mbedtls)
+
+# tinycbor
+ExternalProject_Add(
+  tinycbor
+  GIT_REPOSITORY https://github.com/intel/tinycbor.git
+  GIT_TAG v0.6.0
+  BUILD_IN_SOURCE 1
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND make lib/libtinycbor.a
+  INSTALL_COMMAND ""
+)
+ExternalProject_Get_property(tinycbor SOURCE_DIR)
+message("Source dir of tinycbor = ${SOURCE_DIR}")
+
+enable_testing()
 
 add_library(webauthn STATIC 
     include/webauthn.h
@@ -26,27 +63,7 @@ add_library(webauthn STATIC
     include/PublicKeyCredentialRequestOptions.h src/PublicKeyCredentialRequestOptions.cpp
     include/AuthenticatorAssertionResponse.h src/AuthenticatorAssertionResponse.cpp
     )
-target_include_directories(webauthn PUBLIC include lib/jsoncons/include lib/tinycbor/src)
-
-# Gtest
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
-)
-
-FetchContent_Declare(
-  mbedtls
-  GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
-  GIT_TAG        8c89224991adff88d53cd380f42a2baa36f91454 #Mbed TLS 3.3.0
-)
-
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest mbedtls)
-enable_testing()
-
-find_package(glog)
+target_include_directories(webauthn PUBLIC include lib/jsoncons/include ${SOURCE_DIR}/src) #lib/tinycbor/src)
 
 add_executable(
     webauthn_test
@@ -57,10 +74,10 @@ add_executable(
 target_link_libraries(
   webauthn
   PUBLIC jsoncpp
+  ${SOURCE_DIR}/lib/libtinycbor.a
   GTest::gtest_main
   glog::glog
   Drogon::Drogon
-  ${PROJECT_SOURCE_DIR}/lib/tinycbor/lib/libtinycbor.a
   OpenSSL::Crypto
   MbedTLS::mbedtls
   MbedTLS::mbedcrypto
