@@ -32,6 +32,7 @@ public:
   AttestedCredentialData(const std::vector<unsigned char> &attCredData);
   const std::shared_ptr<PublicKey> getPublicKey() const;
   uint16_t getCredentialIdLength() const;
+  const std::shared_ptr<std::string> getCredentialId() const;
   ~AttestedCredentialData();
 };
 

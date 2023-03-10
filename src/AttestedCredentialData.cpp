@@ -351,4 +351,9 @@ uint16_t AttestedCredentialData::getCredentialIdLength() const {
   return this->credentialIdLength;
 }
 
+const std::shared_ptr<std::string>
+AttestedCredentialData::getCredentialId() const {
+  return this->credentialId;
+}
+
 AttestedCredentialData::~AttestedCredentialData() {}
