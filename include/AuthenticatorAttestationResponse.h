@@ -1,5 +1,6 @@
 #pragma once
 #include "AuthenticatorResponse.h"
+#include "IJsonDeserialize.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -13,13 +14,14 @@
  * §5.2.1. Information About Public Key Credential
  *
  */
-class AuthenticatorAttestationResponse : public AuthenticatorResponse {
+class AuthenticatorAttestationResponse : public AuthenticatorResponse, public IJsonDeserialize<AuthenticatorAttestationResponse> {
 protected:
   std::vector<uint8_t> attestationObject;
 
 public:
-  AuthenticatorAttestationResponse() = delete;
+  AuthenticatorAttestationResponse();
   AuthenticatorAttestationResponse(std::vector<uint8_t> &&attObj,
                                    std::vector<uint8_t> &&clientDataJSON);
+  virtual std::shared_ptr<AuthenticatorAttestationResponse> fromJson(const std::string &json) override;
   ~AuthenticatorAttestationResponse();
 };
