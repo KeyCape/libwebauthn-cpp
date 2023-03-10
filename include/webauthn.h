@@ -57,7 +57,7 @@ public:
       std::shared_ptr<Json::Value> request);
   std::shared_ptr<PublicKeyCredentialRequestOptions>
   beginLogin(std::shared_ptr<std::forward_list<CredentialRecord>> user);
-  void finishLogin(
+  std::forward_list<CredentialRecord>::iterator finishLogin(
       std::shared_ptr<PublicKeyCredential<AuthenticatorAssertionResponse>>
           pKeyCred,
       std::shared_ptr<PublicKeyCredentialRequestOptions> pkeyCredReq,
@@ -332,6 +332,8 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   ret->id = attCredData->getCredentialId();
   ret->signCount = responseAuthData->getSignCount();
   ret->publicKey = attCredData->getPublicKey();
+  ret->bs = responseAuthData->getBackupState();
+  ret->be = responseAuthData->getBackupEligibility();
 
   return ret;
 }
@@ -397,7 +399,7 @@ std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
  * @param credRec The users credential record
  */
 template <typename T>
-void Webauthn<T>::finishLogin(
+std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
     std::shared_ptr<PublicKeyCredential<AuthenticatorAssertionResponse>>
         pKeyCred,
     std::shared_ptr<PublicKeyCredentialRequestOptions> pkeyCredReq,
@@ -650,6 +652,8 @@ void Webauthn<T>::finishLogin(
   */
   credRecIt->signCount = authDataSignCount;
   credRecIt->bs = authData->getBackupState();
+
+  return credRecIt;
 }
 
 template <typename T> Webauthn<T>::~Webauthn() {}
