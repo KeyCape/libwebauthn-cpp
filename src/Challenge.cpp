@@ -1,7 +1,7 @@
 #include "Challenge.h"
 #include <algorithm>
-#include <jsoncpp/json/value.h>
 #include <drogon/utils/Utilities.h>
+#include <jsoncpp/json/value.h>
 #include <random>
 
 Challenge::Challenge() {
@@ -16,7 +16,7 @@ std::shared_ptr<std::vector<unsigned char>> Challenge::getChallenge() {
   return this->challenge;
 }
 std::unique_ptr<Json::Value> Challenge::getJson() {
-  auto ret = std::make_unique<Json::Value>(Json::objectValue);
+  auto ret = std::make_unique<Json::Value>(Json::stringValue);
 
   // Convert the vector to a string
   std::basic_string<unsigned char> str{this->challenge->begin(),
@@ -25,10 +25,11 @@ std::unique_ptr<Json::Value> Challenge::getJson() {
   // Encode the challenge to base64
 
   /* TODO
-   * Die Präprozessor DIrektive __cplusplus ist zu alt. Scheinbar existieren diverse Versionen.
-   * Um die Auflösung von boost zu verhindern muss der Compiler auf die neueste Version aktualisiert werden.
-  */
-  (*ret)["challenge"] = drogon::utils::base64Encode(str.c_str(), str.size());
+   * Die Präprozessor DIrektive __cplusplus ist zu alt. Scheinbar existieren
+   * diverse Versionen. Um die Auflösung von boost zu verhindern muss der
+   * Compiler auf die neueste Version aktualisiert werden.
+   */
+  (*ret) = drogon::utils::base64Encode(str.c_str(), str.size());
 
   return ret;
 }

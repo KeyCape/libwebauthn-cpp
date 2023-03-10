@@ -7,9 +7,9 @@ PublicKeyCredentialUserEntity::PublicKeyCredentialUserEntity(
 
 std::unique_ptr<Json::Value> PublicKeyCredentialUserEntity::getJson() {
   auto json = std::make_unique<Json::Value>();
-  (*json)["user"]["name"] = this->name;
-  (*json)["user"]["displayName"] = this->displayName;
-  (*json)["user"]["id"] = this->id;
+  (*json)["name"] = this->name;
+  (*json)["displayName"] = this->displayName;
+  (*json)["id"] = this->id;
 
   return json;
 }

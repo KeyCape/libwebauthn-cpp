@@ -7,8 +7,8 @@ PublicKeyCredentialRpEntity::PublicKeyCredentialRpEntity(std::string &&name,
 std::unique_ptr<Json::Value> PublicKeyCredentialRpEntity::getJson() {
   auto json = std::make_unique<Json::Value>();
 
-  (*json)["rp"]["name"] = this->name;
-  (*json)["rp"]["id"] = this->id;
+  (*json)["name"] = this->name;
+  (*json)["id"] = this->id;
 
   return json;
 }
