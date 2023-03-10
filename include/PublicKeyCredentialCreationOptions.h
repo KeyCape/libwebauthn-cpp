@@ -5,8 +5,9 @@
 #include "PublicKeyCredentialParameters.h"
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
-#include <forward_list>
 #include <algorithm>
+#include <drogon/utils/Utilities.h>
+#include <forward_list>
 
 /**
  * @brief https://w3c.github.io/webauthn/#dictionary-makecredentialoptions
@@ -39,9 +40,12 @@ public:
       std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
           pubKeyCredParams);
   virtual std::unique_ptr<Json::Value> getJson() override;
-  static std::shared_ptr<PublicKeyCredentialCreationOptions> fromJson(std::shared_ptr<Json::Value> json);
-  const std::shared_ptr<Challenge>getChallenge() const;
-  const std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>> getPublicKeyCredentialParameters() const;
-  const std::shared_ptr<PublicKeyCredentialUserEntity> getPublicKeyCredentialUserEntity() const;
+  static std::shared_ptr<PublicKeyCredentialCreationOptions>
+  fromJson(std::shared_ptr<Json::Value> json);
+  const std::shared_ptr<Challenge> getChallenge() const;
+  const std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
+  getPublicKeyCredentialParameters() const;
+  const std::shared_ptr<PublicKeyCredentialUserEntity>
+  getPublicKeyCredentialUserEntity() const;
   ~PublicKeyCredentialCreationOptions();
 };

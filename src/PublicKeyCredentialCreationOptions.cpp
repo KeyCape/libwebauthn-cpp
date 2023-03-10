@@ -41,9 +41,9 @@ PublicKeyCredentialCreationOptions::fromJson(
   // Extract the user entity
   auto userJson = (*json)["user"];
   std::shared_ptr<PublicKeyCredentialUserEntity> pubKeyCredUser(
-      new PublicKeyCredentialUserEntity{userJson["name"].asString(),
-                                        userJson["displayName"].asString(),
-                                        userJson["id"].asString()});
+      new PublicKeyCredentialUserEntity{
+          userJson["name"].asString(), userJson["displayName"].asString(),
+          drogon::utils::base64Decode(userJson["id"].asString())});
 
   // Extract the challenge
   auto challengeJson = (*json)["challenge"].asString();
