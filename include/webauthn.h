@@ -456,8 +456,8 @@ void Webauthn<T>::finishLogin(
   // again(credRec must at least hold one element).
   LOG(INFO)
       << "Check if the provided credential id belongs to the user account";
-  auto credRecIt = credRec->cbegin();
-  for (; credRecIt != credRec->cend(); ++credRecIt) {
+  auto credRecIt = credRec->begin();
+  for (; credRecIt != credRec->end(); ++credRecIt) {
     DLOG(INFO) << "Comparing credential id:\t" << *credRecIt->id << " with:\t"
                << reqId;
     if (credRecIt->id->compare(reqId) == 0) {
@@ -612,6 +612,44 @@ void Webauthn<T>::finishLogin(
   pkPtr->checkSignature(authenticatorAssertionResponse->getSignature(),
                         sigData);
   LOG(INFO) << "The signature is valid";
+
+  /* §7.2.20 If authData.signCount is nonzero or credentialRecord.signCount is
+    nonzero, then run the following sub-step:
+    -> If authData.signCount is
+        -> greater than credentialRecord.signCount:
+            The signature counter is valid.
+        -> less than or equal to credentialRecord.signCount:
+            This is a signal that the authenticator may be cloned, i.e. at least
+            two copies of the credential private key may exist and are being
+            used in parallel.  Relying Parties should incorporate this
+            information into their risk scoring.  Whether the Relying Party
+            updates credentialRecord.signCount below in this case, or not, or
+            fails the authentication ceremony or not, is Relying Party-specific.
+  */
+  auto authDataSignCount = authData->getSignCount();
+  LOG(INFO) << "Check that the signature count is greater than the saved";
+  DLOG(INFO) << "credentialRecord.signcount: " << credRecIt->signCount;
+  DLOG(INFO) << "authData.signCount: " << authDataSignCount;
+
+  if (!(authDataSignCount > credRecIt->signCount ||
+        (authDataSignCount == 0 && credRecIt->signCount == 0))) {
+    LOG(ERROR) << "The signature count doesn't match is too low. The "
+                  "authenticator may be cloned";
+    throw std::invalid_argument{"The signature count doesn't match is too low. "
+                                "The authenticator may be cloned"};
+  }
+
+  // §7.2.21 If response.attestationObject is present and the Relying Party
+  // wishes to verify the attestation then perform CBOR decoding on
+  // attestationObject to obtain the attestation statement format fmt, and the
+  // attestation statement attStmt.
+
+  /* §7.2.22 Update credentialRecord with new state values:
+      1. Update credentialRecord.signCount to the value of authData.signCount
+      2. Update credentialRecord.backupState to the value of currentBs.
+  */
+  credRecIt->signCount = authDataSignCount;
+  credRecIt->bs = authData->getBackupState();
 }
 
 template <typename T> Webauthn<T>::~Webauthn() {}
