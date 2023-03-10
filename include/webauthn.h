@@ -634,12 +634,17 @@ std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
   DLOG(INFO) << "credentialRecord.signcount: " << credRecIt->signCount;
   DLOG(INFO) << "authData.signCount: " << authDataSignCount;
 
-  if (!(authDataSignCount > credRecIt->signCount ||
-        (authDataSignCount == 0 && credRecIt->signCount == 0))) {
-    LOG(ERROR) << "The signature count doesn't match is too low. The "
-                  "authenticator may be cloned";
-    throw std::invalid_argument{"The signature count doesn't match is too low. "
-                                "The authenticator may be cloned"};
+  if (!(authDataSignCount > credRecIt->signCount)) {
+    if (authDataSignCount == 0 && credRecIt->signCount == 0) {
+      LOG(WARNING) << "THE STORED SIGNATURE COUNT AND THE PASSED ARE BOTH 0!!. "
+                      "For more security this should be prohibited!";
+    } else {
+      LOG(ERROR) << "The signature count doesn't match is too low. The "
+                    "authenticator may be cloned";
+      throw std::invalid_argument{
+          "The signature count doesn't match is too low. "
+          "The authenticator may be cloned"};
+    }
   }
 
   // §7.2.21 If response.attestationObject is present and the Relying Party
