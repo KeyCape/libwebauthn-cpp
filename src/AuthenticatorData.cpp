@@ -73,4 +73,9 @@ bool AuthenticatorData::getBackupState() const {
   return this->flags->test(4);
 }
 
+bool AuthenticatorData::getBackupEligibility() const {
+  // Bit 3 is be
+  return this->flags->test(1);
+}
+
 AuthenticatorData::~AuthenticatorData() {}

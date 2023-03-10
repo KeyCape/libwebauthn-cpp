@@ -37,5 +37,6 @@ public:
   const std::shared_ptr<AttestedCredentialData> getAttestedCredentialData() const;
   const uint32_t getSignCount() const;
   bool getBackupState() const;
+  bool getBackupEligibility() const;
   ~AuthenticatorData();
 };
