@@ -68,4 +68,9 @@ AuthenticatorData::getAuthData() const {
   return this->authData;
 }
 
+bool AuthenticatorData::getBackupState() const {
+  // Bit 4 is bs
+  return this->flags->test(4);
+}
+
 AuthenticatorData::~AuthenticatorData() {}
