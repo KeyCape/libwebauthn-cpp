@@ -83,6 +83,7 @@ struct PublicKeyEC2 : public PublicKey {
  *
  */
 struct PublicKeyRSA : public PublicKey {
+  PublicKeyRSA() { this->kty = COSEKeyType::RSA; }
   std::vector<char> n; // The RSA modulus n
   std::vector<char> e; // The RSA public exponent e
 };
