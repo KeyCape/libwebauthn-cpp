@@ -1,4 +1,5 @@
 #include "PublicKeyCredential.h"
+#include "AuthenticatorAttestationResponse.h"
 #include <gtest/gtest.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/writer.h>
@@ -16,7 +17,7 @@ protected:
 
   std::shared_ptr<Json::Value> json;
 
-  std::shared_ptr<PublicKeyCredential> pkeyCred;
+  std::shared_ptr<PublicKeyCredential<AuthenticatorAttestationResponse>> pkeyCred;
 
   void SetUp() override {
     this->id = "TM28y3B8gDGzpo4NyGkzQtJ1Cv0";
@@ -50,7 +51,7 @@ protected:
     (*this->json)["response"]["attestationObject"] = attObjTmp;
     (*this->json)["response"]["clientDataJSON"] = clientDataJSONTmp;
 
-    this->pkeyCred = std::make_shared<PublicKeyCredential>();
+    this->pkeyCred = std::make_shared<PublicKeyCredential<AuthenticatorAttestationResponse>>();
     this->pkeyCred->fromJson(this->json);
   }
 
