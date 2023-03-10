@@ -1,5 +1,5 @@
 #pragma once
-#include "IJsonSerialize.h"
+#include <glog/logging.h>
 #include <jsoncpp/json/value.h>
 
 /**
@@ -10,12 +10,13 @@
  * generation.
  *
  */
-class AttestationConveyancePreference : public IJsonSerialize {
+class AttestationConveyancePreference {
 public:
   enum type { none, indirect, direct, enterprise };
   AttestationConveyancePreference() = delete;
   AttestationConveyancePreference(type &&attConvPref);
-  virtual std::unique_ptr<Json::Value> getJson();
+  AttestationConveyancePreference(std::string &strAttConvPref);
+  std::shared_ptr<std::string> getString() const;
   ~AttestationConveyancePreference();
 
 private:
