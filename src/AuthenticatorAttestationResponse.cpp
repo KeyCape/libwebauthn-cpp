@@ -166,4 +166,9 @@ AuthenticatorAttestationResponse::getAuthData() const {
   return this->authData;
 }
 
+const std::shared_ptr<std::string>
+AuthenticatorAttestationResponse::getFmt() const {
+  return this->fmt;
+}
+
 AuthenticatorAttestationResponse::~AuthenticatorAttestationResponse() {}

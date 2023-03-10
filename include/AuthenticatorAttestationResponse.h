@@ -1,17 +1,17 @@
 #pragma once
-#include "AuthenticatorResponse.h"
 #include "AuthenticatorData.h"
+#include "AuthenticatorResponse.h"
 #include "IJsonDeserialize.h"
 #include <algorithm>
+#include <bitset>
 #include <cbor.h>
 #include <cstdint>
 #include <glog/logging.h>
 #include <jsoncpp/json/reader.h>
 #include <jsoncpp/json/value.h>
+#include <openssl/sha.h>
 #include <string>
 #include <vector>
-#include <bitset>
-#include <openssl/sha.h>
 
 /**
  * @brief The AuthenticatorAttestationResponse interface represents the
@@ -34,5 +34,6 @@ public:
                                    std::vector<uint8_t> &&clientDataJSON);
   virtual void fromJson(const std::shared_ptr<Json::Value> json) override;
   const std::shared_ptr<AuthenticatorData> getAuthData() const;
+  const std::shared_ptr<std::string> getFmt() const;
   ~AuthenticatorAttestationResponse();
 };
