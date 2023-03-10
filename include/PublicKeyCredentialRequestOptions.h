@@ -1,6 +1,7 @@
 #pragma once
 #include "Challenge.h"
 #include "IJsonSerialize.h"
+#include "IJsonDeserialize.h"
 #include "PublicKeyCredentialDescriptor.h"
 #include <forward_list>
 #include <memory>
@@ -58,6 +59,7 @@ public:
       std::shared_ptr<AttestationConveyancePreference> attestation,
       std::shared_ptr<std::forward_list<std::string>> attestationFormats);
   virtual std::unique_ptr<Json::Value> getJson() override;
+  static std::shared_ptr<PublicKeyCredentialRequestOptions> fromJson(const std::shared_ptr<Json::Value> json);
   const std::shared_ptr<std::forward_list<PublicKeyCredentialDescriptor>>
   getAllowedCredentials();
   const std::shared_ptr<Challenge> getChallenge();
