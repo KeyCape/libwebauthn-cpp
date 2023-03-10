@@ -38,6 +38,7 @@ enable_testing()
 add_executable(
     test  
     gtest/test_PublicKeyCredential.cpp
+    gtest/test_AuthenticatorResponse.cpp
 )
 target_link_libraries(
   test
