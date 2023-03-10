@@ -7,9 +7,12 @@ AuthenticatorResponse::AuthenticatorResponse(
     : clientDataJSON{clientDataJSON} {}
 
 void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
-  if (json->isNull()) {
+  LOG(INFO) << "Parse AuthenticatorResponse";
+  if (!json || json->isNull()) {
     throw std::invalid_argument{"Empty json"};
   }
+  // Check if the following json structure exists: {"response":
+  // {"clientDataJSON": "", ..}}
   if (json->isMember("response")) {
     if (!(*json)["response"].isMember("clientDataJSON")) {
       throw std::invalid_argument{"Missing key: clientDataJSON"};
@@ -18,14 +21,17 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
     throw std::invalid_argument{"Missing key: response"};
   }
   std::string tmp = (*json)["response"]["clientDataJSON"].asString();
+  DLOG(INFO) << "clientDataJSON: " << tmp;
 
   this->clientDataJSON.reserve(tmp.size());
   std::transform(tmp.begin(), tmp.end(), this->clientDataJSON.begin(),
                  [](const auto &t) { return t; });
 
+  LOG(INFO) << "Decode clientDataJSON";
   // Decode clientDataJSON
   std::string decodedJson = drogon::utils::base64Decode(tmp);
 
+  LOG(INFO) << "Parse the decoded object to JSON";
   std::string err;
   Json::Value clientDataJSON;
   Json::CharReaderBuilder builder;
@@ -37,21 +43,23 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
     throw std::invalid_argument{err};
   }
 
-  if(!this->type) {
+  if (!this->type) {
     this->type = std::make_shared<std::string>();
   }
 
-  if(!this->challenge) {
+  if (!this->challenge) {
     this->challenge = std::make_shared<std::string>();
   }
 
-  if(!this->origin) {
+  if (!this->origin) {
     this->origin = std::make_shared<std::string>();
   }
 
   *this->type = clientDataJSON["type"].asString();
   *this->challenge = clientDataJSON["challenge"].asString();
   *this->origin = clientDataJSON["origin"].asString();
+  DLOG(INFO) << "type: " << *this->type << "\tchallenge: " << *this->challenge
+          << "\torigin: " << *this->origin;
 }
 const std::shared_ptr<std::string> AuthenticatorResponse::getType() {
   return this->type;

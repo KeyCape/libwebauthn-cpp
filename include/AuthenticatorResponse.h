@@ -4,6 +4,7 @@
 #include "IJsonDeserialize.h"
 #include <drogon/utils/Utilities.h>
 #include <jsoncpp/json/reader.h>
+#include <glog/logging.h>
 
 /**
  * @brief Authenticators respond to relying party requests by returning an
