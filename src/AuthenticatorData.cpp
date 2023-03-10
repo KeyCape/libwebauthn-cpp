@@ -11,6 +11,9 @@ AuthenticatorData::AuthenticatorData(
   }
   DLOG(INFO) << "authData len: " << authData.size();
 
+  // Save the raw data
+  this->authData = std::make_shared<std::vector<unsigned char>>(authData);
+
   // The hash is sha256
   // From byte [0 - 31]
   this->rpIdHash = std::make_shared<std::vector<unsigned char>>(
@@ -53,6 +56,10 @@ AuthenticatorData::getAttestedCredentialData() const {
 
 const uint32_t AuthenticatorData::getSignCount() const {
   return this->signCount;
+}
+const std::shared_ptr<std::vector<unsigned char>>
+AuthenticatorData::getAuthData() const {
+  return this->authData;
 }
 
 AuthenticatorData::~AuthenticatorData() {}

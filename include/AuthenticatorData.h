@@ -15,6 +15,7 @@
  */
 class AuthenticatorData {
 private:
+std::shared_ptr<std::vector<unsigned char>> authData;
 std::shared_ptr<std::vector<unsigned char>> rpIdHash;
 std::shared_ptr<std::bitset<8>> flags;
 uint32_t signCount;
@@ -32,6 +33,7 @@ public:
   AuthenticatorData(const std::vector<unsigned char>& authData);
   const std::shared_ptr<std::vector<unsigned char>> getRpIdHash() const;
   const std::shared_ptr<std::bitset<8>> getFlags() const;
+  const std::shared_ptr<std::vector<unsigned char>> getAuthData() const;
   const std::shared_ptr<AttestedCredentialData> getAttestedCredentialData() const;
   const uint32_t getSignCount() const;
   ~AuthenticatorData();
