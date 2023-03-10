@@ -35,7 +35,7 @@ AttestedCredentialData::AttestedCredentialData(
   LOG(INFO) << "Extract the credential id from attCrdData";
   this->credentialId = std::make_shared<std::string>(
       attCredData.begin() + 18,
-      attCredData.begin() + 18 + this->credentialIdLength + 1);
+      attCredData.begin() + 18 + this->credentialIdLength);
   DLOG(INFO) << "The credential id is: " << *this->credentialId;
 
   this->extractCredentialPublicKey(attCredData);
