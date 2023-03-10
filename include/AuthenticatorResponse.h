@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include "IJsonDeserialize.h"
+#include <drogon/utils/Utilities.h>
+#include <jsoncpp/json/reader.h>
 
 /**
  * @brief Authenticators respond to relying party requests by returning an
@@ -9,12 +12,19 @@
  * Authenticator Responses
  *
  */
-class AuthenticatorResponse {
+class AuthenticatorResponse : IJsonDeserialize {
 protected:
   std::vector<std::uint8_t> clientDataJSON;
+  std::shared_ptr<std::string> type;
+  std::shared_ptr<std::string> challenge;
+  std::shared_ptr<std::string> origin;
 
 public:
   AuthenticatorResponse();
   AuthenticatorResponse(std::vector<std::uint8_t> &&clientDataJSON);
+  const std::shared_ptr<std::string> getType();
+  const std::shared_ptr<std::string> getChallenge();
+  const std::shared_ptr<std::string> getOrigin();
+  virtual void fromJson(const std::shared_ptr<Json::Value> json) override;
   ~AuthenticatorResponse();
 };
