@@ -69,4 +69,15 @@ PublicKeyCredentialCreationOptions::fromJson(
       std::make_shared<std::forward_list<PublicKeyCredentialParameters>>(
           pubKeyCredParams));
 }
+
+const std::shared_ptr<Challenge>
+PublicKeyCredentialCreationOptions::getChallenge() const {
+  return this->challenge;
+}
+
+const std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
+PublicKeyCredentialCreationOptions::getPublicKeyCredentialParameters() const {
+  return this->pubKeyCredParams;
+}
+
 PublicKeyCredentialCreationOptions::~PublicKeyCredentialCreationOptions() {}
