@@ -6,6 +6,7 @@ class CredentialRecord {
 public:
   PublicKeyCredentialType type;
   std::shared_ptr<std::string> id;
+  std::shared_ptr<std::string> uName;
   uint32_t signCount;
   std::shared_ptr<PublicKey> publicKey;
   //! Backup eligible
