@@ -91,6 +91,7 @@ public:
  * Section COSE Key Types
  *
  */
+namespace COSEKeyType {
 enum COSEKeyType {
   RESERVED = 0,  // This value is reserved
   OKP = 1,       // Octet Key Pair
@@ -100,6 +101,7 @@ enum COSEKeyType {
   HSS_LMS = 5,   // Public key for HSS/LMS hash-based digital signature
   WALNUT_DSA = 6 // WalnutDSA public key
 };
+}
 
 /**
  * @brief Public key base class. This struct is not meant to be used standalone,
@@ -107,7 +109,7 @@ enum COSEKeyType {
  *
  */
 struct PublicKey {
-  COSEKeyType kty;             // Identification of the key type
+  COSEKeyType::COSEKeyType kty;             // Identification of the key type
   COSEAlgorithmIdentifier alg; // Key usage restriction to this algorithm
   virtual ~PublicKey() {}
 };
