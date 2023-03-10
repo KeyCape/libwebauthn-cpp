@@ -1,10 +1,10 @@
 #pragma once
 #include <memory>
+#include <jsoncpp/json/value.h>
 
-template <typename T>
 class IJsonDeserialize {
 public:
     IJsonDeserialize() {}
-    virtual std::shared_ptr<T> fromJson(const std::string &json) = 0;
+    virtual void fromJson(const std::shared_ptr<Json::Value> json) = 0;
     ~IJsonDeserialize() {}
 };

@@ -8,25 +8,33 @@ PublicKeyCredential::PublicKeyCredential(
     std::shared_ptr<AuthenticatorAttestationResponse> response)
     : id{id}, type{type}, rawId{rawId}, response{response} {}
 
-std::shared_ptr<PublicKeyCredential> PublicKeyCredential::fromJson(const std::string &json) {
-  JSONCPP_STRING err;
-  Json::Value root;
-  Json::CharReaderBuilder builder;
-  const std::unique_ptr<Json::CharReader> reader{builder.newCharReader()};
-
-  if (!reader->parse(json.c_str(), json.c_str() + json.length(), &root, &err)) {
-    throw std::runtime_error{err};
+void PublicKeyCredential::fromJson(const std::shared_ptr<Json::Value> json) {
+  if (json->isNull()) {
+    throw std::invalid_argument{"Empty json"};
+  }
+  if (!json->isMember("id")) {
+    throw std::invalid_argument{"Missing key: id"};
+  }
+  if (!json->isMember("rawId")) {
+    throw std::invalid_argument{"Missing key: rawId"};
+  }
+  if (!json->isMember("type")) {
+    throw std::invalid_argument{"Missing key: type"};
   }
 
-  std::string rawIdTemp = root["id"].asString();
-  std::vector<std::uint8_t> rawId(rawIdTemp.length());
-  std::transform(rawIdTemp.begin(), rawIdTemp.end(), rawId.begin(),
+  this->id = (*json)["id"].asString();
+  this->type = (*json)["type"].asString();
+  std::string rawIdTemp = (*json)["rawId"].asString();
+
+  this->rawId.resize(rawIdTemp.size());
+  std::transform(rawIdTemp.begin(), rawIdTemp.end(), this->rawId.begin(),
                  [](unsigned char c) { return c; });
 
-  std::shared_ptr<AuthenticatorAttestationResponse> aatr;
+  if (this->response == nullptr) {
+    this->response = std::make_shared<AuthenticatorAttestationResponse>();
+  }
 
-  return std::make_shared<PublicKeyCredential>(root["id"].asString(), root["type"].asString(),
-                                 std::move(rawId), aatr);
+  this->response->fromJson(json);
 }
 
 const std::string &PublicKeyCredential::getId() { return this->id; }

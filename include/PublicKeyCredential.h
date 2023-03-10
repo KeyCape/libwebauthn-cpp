@@ -8,7 +8,7 @@
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
 
-class PublicKeyCredential : IJsonDeserialize<PublicKeyCredential> {
+class PublicKeyCredential : IJsonDeserialize {
 protected:
   std::string id;
   std::string type;
@@ -20,7 +20,7 @@ public:
   PublicKeyCredential(std::string &&id, std::string &&type,
                       std::vector<std::uint8_t> &&rawId,
                       std::shared_ptr<AuthenticatorAttestationResponse> response);
-  virtual std::shared_ptr<PublicKeyCredential> fromJson(const std::string &json) override;
+  virtual void fromJson(const std::shared_ptr<Json::Value> json) override;
   const std::string& getId();
   const std::string& getType();
   const std::vector<std::uint8_t>& getRawId();
