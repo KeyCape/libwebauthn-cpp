@@ -1,5 +1,6 @@
 #pragma once
 #include "PublicKeyCredentialEntity.h"
+#include <drogon/utils/Utilities.h>
 #include <string>
 
 /// @brief https://w3c.github.io/webauthn/#dictionary-user-credential-params
