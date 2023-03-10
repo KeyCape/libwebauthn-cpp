@@ -1,6 +1,7 @@
 #include "AuthenticatorData.h"
 
-AuthenticatorData::AuthenticatorData(const std::vector<unsigned char> &authData) {
+AuthenticatorData::AuthenticatorData(
+    const std::vector<unsigned char> &authData) {
   // authData has to be at least 37 bytes. See:
   // https://w3c.github.io/webauthn/#sctn-authenticator-data
   if (authData.size() < 37) {
@@ -12,8 +13,8 @@ AuthenticatorData::AuthenticatorData(const std::vector<unsigned char> &authData)
 
   // The hash is sha256
   // From byte [0 - 31]
-  this->rpIdHash = std::make_shared<std::vector<unsigned char>>(authData.begin(),
-                                                       authData.begin() + 32);
+  this->rpIdHash = std::make_shared<std::vector<unsigned char>>(
+      authData.begin(), authData.begin() + 32);
   DLOG(INFO) << "RpIdHash length: " << this->rpIdHash->size();
 
   LOG(INFO) << "Extract the flags from authData";
@@ -34,6 +35,20 @@ AuthenticatorData::AuthenticatorData(const std::vector<unsigned char> &authData)
     this->attCredData = std::make_shared<AttestedCredentialData>(
         std::vector<unsigned char>{authData.begin() + 37, authData.end()});
   }
+}
+
+const std::shared_ptr<std::vector<unsigned char>>
+AuthenticatorData::getRpIdHash() const {
+  return this->rpIdHash;
+}
+
+const std::shared_ptr<std::bitset<8>> AuthenticatorData::getFlags() const {
+  return this->flags;
+}
+
+const std::shared_ptr<AttestedCredentialData>
+AuthenticatorData::getAttestedCredentialData() const {
+  return this->attCredData;
 }
 
 AuthenticatorData::~AuthenticatorData() {}
