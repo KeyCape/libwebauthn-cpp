@@ -1,5 +1,7 @@
 #pragma once
+#include "IJsonSerialize.h"
 #include <string>
+#include <memory>
 
 /**
  * @brief https://w3c.github.io/webauthn/#typedefdef-cosealgorithmidentifier
@@ -21,7 +23,7 @@ enum COSEAlgorithmIdentifier {
 
 enum PublicKeyCredentialType { public_key };
 
-class PublicKeyCredentialParameters {
+class PublicKeyCredentialParameters : public IJsonSerialize {
 private:
   std::string type;
   COSEAlgorithmIdentifier alg;
@@ -30,5 +32,6 @@ public:
   PublicKeyCredentialParameters(
       COSEAlgorithmIdentifier &&alg,
       PublicKeyCredentialType &&type = PublicKeyCredentialType::public_key);
+      virtual std::unique_ptr<Json::Value> getJson() override;
   ~PublicKeyCredentialParameters();
 };
