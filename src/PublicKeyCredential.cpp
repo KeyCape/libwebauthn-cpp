@@ -22,7 +22,7 @@ void PublicKeyCredential::fromJson(const std::shared_ptr<Json::Value> json) {
     throw std::invalid_argument{"Missing key: type"};
   }
 
-  LOG(INFO) << "Device id: "<< this->id << "\ttype: " << this->type;
+  LOG(INFO) << "Device id: " << this->id << "\ttype: " << this->type;
   this->id = (*json)["id"].asString();
   this->type = (*json)["type"].asString();
   std::string rawIdTemp = (*json)["rawId"].asString();
