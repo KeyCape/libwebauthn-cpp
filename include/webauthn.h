@@ -1,12 +1,14 @@
 #pragma once
+#include "Base64Url.h"
+#include "PublicKeyCredential.h"
 #include "PublicKeyCredentialCreationOptions.h"
 #include "PublicKeyCredentialParameters.h"
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
-#include "Base64Url.h"
 #include "jsoncons/json.hpp"
 #include "jsoncons_ext/cbor/decode_cbor.hpp"
 #include "jsoncons_ext/jsonpath/jsonpath.hpp"
+#include <glog/logging.h>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -34,7 +36,9 @@ public:
    */
   std::shared_ptr<PublicKeyCredentialCreationOptions>
   beginRegistration(std::string &username);
-  std::shared_ptr<T> finishRegistration(std::shared_ptr<PublicKeyCredentialCreationOptions> options, std::shared_ptr<Json::Value> request);
+  std::shared_ptr<T> finishRegistration(
+      std::shared_ptr<PublicKeyCredentialCreationOptions> options,
+      std::shared_ptr<Json::Value> request);
   ~Webauthn();
 };
 
@@ -58,6 +62,7 @@ Webauthn<T>::Webauthn(std::string &&name, std::string &&id)
 template <typename T>
 std::shared_ptr<PublicKeyCredentialCreationOptions>
 Webauthn<T>::beginRegistration(std::string &username) {
+  LOG(INFO) << "Beginning with the credential registration ceremony";
   if (username.empty()) {
     throw std::runtime_error{"The username must NOT be emtpy"};
   }
@@ -94,19 +99,23 @@ Webauthn<T>::beginRegistration(std::string &username) {
  * @return std::shared_ptr<T> A pointer to with filled attributes
  */
 template <typename T>
-std::shared_ptr<T>
-Webauthn<T>::finishRegistration(std::shared_ptr<PublicKeyCredentialCreationOptions> options, std::shared_ptr<Json::Value> request) {
+std::shared_ptr<T> Webauthn<T>::finishRegistration(
+    std::shared_ptr<PublicKeyCredentialCreationOptions> options,
+    std::shared_ptr<Json::Value> request) {
+  static_assert(std::is_base_of<CredentialRecord, T>::value,
+                "The return type of finishRegistration has to be derived from "
+                "CredentialRecord");
+  LOG(INFO) << "Finishing the registration ceremony";
+
+  if (!(options && request)) {
+    LOG(ERROR) << "One of the parameters to finishRegistration has not been "
+                  "initialized";
+    throw std::invalid_argument{"One of the parameters is Null"};
+  }
   auto ret = std::make_shared<T>();
 
-/*std::shared_ptr<std::string> data = std::make_shared<std::string>("o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViYSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NdAAAAAAAAAAAAAAAAAAAAAAAAAAAAFNphln4gWvo48ah9pArJo6t7wP36pQECAyYgASFYIPcg7P9N6wJZ8Z0wNNlat0oFk_VfdAbnXIirqZ6CnKAGIlgglwtVKdI7VEO18BQWmm2PtCjy1lNm8TGxAmlaZ6z4j-g");
-  Base64Url::decode(data);
-  jsoncons::json j = jsoncons::cbor::decode_cbor<jsoncons::json>(data->begin(), data->end());
-
-  std::stringstream str;
-  str << jsoncons::pretty_print(j);
-
-  LOG_DEBUG << "CBOR: " << str.str();
-*/
+  PublicKeyCredential pkeyCred;
+  pkeyCred.fromJson(request);
 
   return ret;
 }
