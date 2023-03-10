@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(webauthn VERSION 0.1)
 set(CMAKE_CXX_STANDARD 20)
 find_package(Drogon CONFIG REQUIRED)
@@ -35,9 +35,15 @@ FetchContent_Declare(
   URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip
 )
 
+FetchContent_Declare(
+  mbedtls
+  GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
+  GIT_TAG        8c89224991adff88d53cd380f42a2baa36f91454 #Mbed TLS 3.3.0
+)
+
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+FetchContent_MakeAvailable(googletest mbedtls)
 enable_testing()
 
 find_package(glog)
@@ -50,12 +56,15 @@ add_executable(
 
 target_link_libraries(
   webauthn
-  jsoncpp
+  PUBLIC jsoncpp
   GTest::gtest_main
   glog::glog
   Drogon::Drogon
   ${PROJECT_SOURCE_DIR}/lib/tinycbor/lib/libtinycbor.a
   OpenSSL::Crypto
+  MbedTLS::mbedtls
+  MbedTLS::mbedcrypto
+  MbedTLS::mbedx509
 )
 
 target_link_libraries(
