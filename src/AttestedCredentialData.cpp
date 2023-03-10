@@ -347,4 +347,8 @@ const std::shared_ptr<PublicKey> AttestedCredentialData::getPublicKey() const {
   return this->pkey;
 }
 
+uint16_t AttestedCredentialData::getCredentialIdLength() const {
+  return this->credentialIdLength;
+}
+
 AttestedCredentialData::~AttestedCredentialData() {}

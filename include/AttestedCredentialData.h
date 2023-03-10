@@ -31,6 +31,7 @@ private:
 public:
   AttestedCredentialData(const std::vector<unsigned char> &attCredData);
   const std::shared_ptr<PublicKey> getPublicKey() const;
+  uint16_t getCredentialIdLength() const;
   ~AttestedCredentialData();
 };
 
@@ -67,9 +68,7 @@ struct PublicKey {
  *
  */
 struct PublicKeyEC2 : public PublicKey {
-  PublicKeyEC2()  {
-    this->kty = COSEKeyType::EC2;
-  }
+  PublicKeyEC2() { this->kty = COSEKeyType::EC2; }
   int crv; // EC identifier -- Taken from the "COSE Elliptic Curves" registry
   std::vector<char> x; // x-coordinate
   std::vector<char> y; // y-coordinate
