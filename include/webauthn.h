@@ -23,7 +23,7 @@ private:
   bool validateOrigin(const std::shared_ptr<std::string> originPtr) const;
 
 public:
-  Webauthn() = delete;
+  Webauthn();
   /// @brief Create an instance of a relying party
   /// @param name This is the name of the relying party
   /// @param id This is the id of the relying party, which is transfered to the
@@ -43,21 +43,21 @@ public:
   std::shared_ptr<T> finishRegistration(
       std::shared_ptr<PublicKeyCredentialCreationOptions> options,
       std::shared_ptr<Json::Value> request);
+  void setRpId(std::string &id);
+  void setRpName(std::string &id);
   ~Webauthn();
 };
 
-template <typename T>
-Webauthn<T>::Webauthn(std::string &&name, std::string &&id)
-    : rp_name{name}, rp_id{id} {
+template <typename T> Webauthn<T>::Webauthn() {
   static_assert(std::is_base_of_v<CredentialRecord, T>,
                 "The return type of finishRegistration(..) must be a child of "
                 "the class CredentialRecord");
+}
 
-  // Calculate the hash of the relying partys id
-  unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id.data(),
-                                  this->rp_id.size(), NULL);
-  this->rp_id_hash =
-      std::make_shared<std::vector<unsigned char>>(hashPtr,hashPtr+32);
+template <typename T>
+Webauthn<T>::Webauthn(std::string &&name, std::string &&id) : Webauthn() {
+  this->setRpName(name);
+  this->setRpId(id);
 }
 /**
  * @brief This method is used to start the registration ceremony of a
@@ -187,9 +187,9 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
         "The hash length of the relying partys id doesn't match"};
   }
 
-  //if (this->rp_id_hash->compare(0, responseAuthDataRpIdHash->size(),
-  //                              responseAuthDataRpIdHash->data()) != 0) {
-    if(*this->rp_id_hash != *responseAuthDataRpIdHash){
+  // if (this->rp_id_hash->compare(0, responseAuthDataRpIdHash->size(),
+  //                               responseAuthDataRpIdHash->data()) != 0) {
+  if (*this->rp_id_hash != *responseAuthDataRpIdHash) {
     LOG(WARNING)
         << "The hash of the rp id provided by the web agent dosen't match";
     throw std::invalid_argument{
@@ -265,7 +265,8 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // registry [IANA-WebAuthn-Registries] established by [RFC8809].
   LOG(INFO) << "Verify that attestation statement format provided by the "
                "client is allowed";
-  if(std::find(this->fmtList.cbegin(), this->fmtList.cend(), *response->getFmt()) == this->fmtList.cend()) {
+  if (std::find(this->fmtList.cbegin(), this->fmtList.cend(),
+                *response->getFmt()) == this->fmtList.cend()) {
     LOG(WARNING) << "The attestation statement format is not allowed";
     DLOG(WARNING) << "The attestation statement format provided by the client "
                      "is not allowed fmt: "
@@ -274,19 +275,29 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
         "The attestation statement format is not allowed"};
   }
 
-  // §7.1.20 Verify that attStmt is a correct attestation statement, conveying a valid attestation signature, by using the attestation statement format fmt’s verification procedure given attStmt, authData and hash.
+  // §7.1.20 Verify that attStmt is a correct attestation statement, conveying a
+  // valid attestation signature, by using the attestation statement format
+  // fmt’s verification procedure given attStmt, authData and hash.
   // TODO
 
-  // §7.1.21 If validation is successful, obtain a list of acceptable trust anchors (i.e. attestation root certificates) for that attestation type and attestation statement format fmt, from a trusted source or from policy. For example, the FIDO Metadata Service [FIDOMetadataService] provides one way to obtain such information, using the aaguid in the attestedCredentialData in authData.
-  // FIDOMetadataService: https://w3c.github.io/webauthn/#biblio-fidometadataservice
+  // §7.1.21 If validation is successful, obtain a list of acceptable trust
+  // anchors (i.e. attestation root certificates) for that attestation type and
+  // attestation statement format fmt, from a trusted source or from policy. For
+  // example, the FIDO Metadata Service [FIDOMetadataService] provides one way
+  // to obtain such information, using the aaguid in the attestedCredentialData
+  // in authData. FIDOMetadataService:
+  // https://w3c.github.io/webauthn/#biblio-fidometadataservice
   // TODO
 
-  // §7.1.22 Assess the attestation trustworthiness using the outputs of the verification procedure in step 19.
+  // §7.1.22 Assess the attestation trustworthiness using the outputs of the
+  // verification procedure in step 19.
   // TODO
 
-  // §7.1.23 Verify that the credentialId is ≤ 1023 bytes. Credential IDs larger than this many bytes SHOULD cause the RP to fail this registration ceremony.
+  // §7.1.23 Verify that the credentialId is ≤ 1023 bytes. Credential IDs larger
+  // than this many bytes SHOULD cause the RP to fail this registration
+  // ceremony.
   auto attCredData = responseAuthData->getAttestedCredentialData();
-  if(attCredData->getCredentialIdLength() > 1023) {
+  if (attCredData->getCredentialIdLength() > 1023) {
     LOG(WARNING) << "The length of the credential id has to be <= 1023";
     DLOG(WARNING) << "The length of the credential id is: "
                   << attCredData->getCredentialIdLength();
@@ -323,4 +334,19 @@ bool Webauthn<T>::validateOrigin(
     }
   }
   return false;
+}
+
+template <typename T> void Webauthn<T>::setRpId(std::string &id) {
+  // Calculate the hash of the relying partys id
+  unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id.data(),
+                                  this->rp_id.size(), NULL);
+  this->rp_id_hash =
+      std::make_shared<std::vector<unsigned char>>(hashPtr, hashPtr + 32);
+
+  LOG(INFO) << "The relying party id is now: " << id;
+}
+
+template <typename T> void Webauthn<T>::setRpName(std::string &name) {
+  this->rp_name = name;
+  LOG(INFO) << "The relying party name is now: " << name;
 }
