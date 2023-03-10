@@ -3,8 +3,10 @@
 #include "PublicKeyCredential.h"
 #include "PublicKeyCredentialCreationOptions.h"
 #include "PublicKeyCredentialParameters.h"
+#include "PublicKeyCredentialRequestOptions.h"
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
+#include <CredentialRecord.h>
 #include <glog/logging.h>
 #include <openssl/sha.h>
 #include <string>
@@ -13,12 +15,15 @@
 
 template <typename T> class Webauthn {
 private:
-  std::string rp_name;
-  std::string rp_id;
+  std::shared_ptr<std::string> rp_name;
+  std::shared_ptr<std::string> rp_id;
   std::shared_ptr<std::vector<unsigned char>> rp_id_hash;
   std::vector<std::string> fmtList = {
       "none", "packed"}; // A vector which contains the allowed attestation
                          // statement formats.
+  std::shared_ptr<unsigned long> timeout;
+  std::shared_ptr<UserVerificationRequirement> userVerification;
+  std::shared_ptr<AttestationConveyancePreference> attestation;
 
   bool validateOrigin(const std::shared_ptr<std::string> originPtr) const;
 
@@ -43,6 +48,8 @@ public:
   std::shared_ptr<T> finishRegistration(
       std::shared_ptr<PublicKeyCredentialCreationOptions> options,
       std::shared_ptr<Json::Value> request);
+  std::shared_ptr<PublicKeyCredentialRequestOptions>
+  beginLogin(std::shared_ptr<std::forward_list<CredentialRecord>> user);
   void setRpId(std::string &id);
   void setRpName(std::string &id);
   ~Webauthn();
@@ -78,8 +85,8 @@ Webauthn<T>::beginRegistration(std::string &username) {
   }
 
   auto rp = std::make_shared<PublicKeyCredentialRpEntity>(
-      PublicKeyCredentialRpEntity(std::forward<std::string>(this->rp_name),
-                                  std::forward<std::string>(this->rp_id)));
+      PublicKeyCredentialRpEntity(std::forward<std::string>(*this->rp_name),
+                                  std::forward<std::string>(*this->rp_id)));
 
   auto user = std::make_shared<PublicKeyCredentialUserEntity>(
       PublicKeyCredentialUserEntity{std::forward<std::string>(username),
@@ -315,6 +322,55 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   return ret;
 }
 
+/**
+ * @brief This method is called in order to start the authentication ceremony
+ * for a registered credential.
+ *
+ * See: https://w3c.github.io/webauthn/#sctn-verifying-assertion §7.2
+ *
+ * @tparam T The type is of base class CredentialRecord
+ * @param username The unique username
+ * @return std::shared_ptr<PublicKeyCredentialRequestOptions>
+ */
+template <typename T>
+std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
+    std::shared_ptr<std::forward_list<CredentialRecord>> user) {
+  LOG(INFO) << "Beginning with the credential authentication ceremony";
+  if (!user) {
+    throw std::runtime_error{"The user must NOT be NULL"};
+  }
+
+  // §7.2.1 Let options be a new PublicKeyCredentialRequestOptions structure
+  // configured to the Relying Party's needs for the ceremony.
+  auto challenge = std::make_shared<Challenge>();
+  auto allowCredentials =
+      std::make_shared<std::forward_list<PublicKeyCredentialDescriptor>>();
+
+  std::transform(
+      user->cbegin(), user->cend(), std::front_inserter(*allowCredentials),
+      [](CredentialRecord record) {
+        if (!record.id) {
+          LOG(ERROR) << "Missing the credential id";
+          throw std::invalid_argument{"Missing the credential id"};
+        }
+        std::string tmpType = "";
+
+        switch (record.type) {
+        case public_key:
+          tmpType = "public-key";
+          break;
+        }
+        DLOG(INFO) << "Found credential \tid: " << record.id
+                   << "\ttype: " << tmpType;
+        return PublicKeyCredentialDescriptor(
+            std::move(tmpType), std::forward<std::string>(*record.id));
+      });
+
+  return std::make_shared<PublicKeyCredentialRequestOptions>(
+      challenge, this->timeout, this->rp_id, allowCredentials,
+      this->userVerification, this->attestation, nullptr);
+}
+
 template <typename T> Webauthn<T>::~Webauthn() {}
 
 template <typename T>
@@ -330,17 +386,17 @@ bool Webauthn<T>::validateOrigin(
   if (std::regex_match(*originPtr, match, reg)) {
     LOG(INFO) << "Match origin directly against RP ID";
     if (match.size() == 2) {
-      return match[1].str().compare(this->rp_id) == 0;
+      return match[1].str().compare(*this->rp_id) == 0;
     }
   }
   return false;
 }
 
 template <typename T> void Webauthn<T>::setRpId(std::string &id) {
-  this->rp_id = id;
+  this->rp_id = std::make_shared<std::string>(id);
   // Calculate the hash of the relying partys id
-  unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id.data(),
-                                  this->rp_id.size(), NULL);
+  unsigned char *hashPtr = SHA256((const unsigned char *)this->rp_id->data(),
+                                  this->rp_id->size(), NULL);
   this->rp_id_hash =
       std::make_shared<std::vector<unsigned char>>(hashPtr, hashPtr + 32);
 
@@ -348,6 +404,6 @@ template <typename T> void Webauthn<T>::setRpId(std::string &id) {
 }
 
 template <typename T> void Webauthn<T>::setRpName(std::string &name) {
-  this->rp_name = name;
+  this->rp_name = std::make_shared<std::string>(name);
   LOG(INFO) << "The relying party name is now: " << name;
 }
