@@ -17,13 +17,14 @@ add_library(webauthn STATIC
     include/AuthenticatorSelectionCriteria.h src/AuthenticatorSelectionCriteria.cpp
     include/PublicKeyCredentialRpEntity.h src/PublicKeyCredentialRpEntity.cpp
     include/CredentialRecord.h src/CredentialRecord.cpp
-    include/PublicKeyCredential.h src/PublicKeyCredential.cpp
+    include/PublicKeyCredential.h
     include/AuthenticatorResponse.h src/AuthenticatorResponse.cpp
     include/AuthenticatorAttestationResponse.h src/AuthenticatorAttestationResponse.cpp
     include/Base64Url.h src/Base64Url.cpp
     include/AuthenticatorData.h src/AuthenticatorData.cpp
     include/AttestedCredentialData.h src/AttestedCredentialData.cpp
     include/PublicKeyCredentialRequestOptions.h src/PublicKeyCredentialRequestOptions.cpp
+    include/AuthenticatorAssertionResponse.h src/AuthenticatorAssertionResponse.cpp
     )
 target_include_directories(webauthn PUBLIC include lib/jsoncons/include lib/tinycbor/src)
 
