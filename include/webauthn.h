@@ -3,9 +3,10 @@
 #include "PublicKeyCredentialParameters.h"
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
+#include "Base64Url.h"
 #include <string>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 template <typename T> class Webauthn {
 private:
@@ -37,9 +38,20 @@ public:
 template <typename T>
 Webauthn<T>::Webauthn(std::string &&name, std::string &&id)
     : rp_name{name}, rp_id{id} {
-      static_assert(std::is_base_of_v<CredentialRecord, T>, "The return type of finishRegistration(..) must be a child of the class CredentialRecord");
-    }
-
+  static_assert(std::is_base_of_v<CredentialRecord, T>,
+                "The return type of finishRegistration(..) must be a child of "
+                "the class CredentialRecord");
+}
+/**
+ * @brief This method is used to start the registration ceremony of a
+ * credential.
+ *
+ * @tparam T Of type CredentialRecord
+ * @param username  The username to register. This parameter has to be
+ * unique(Could be a unique name or more common an email address).
+ * @return std::shared_ptr<PublicKeyCredentialCreationOptions> Prefilled
+ * datatype, which has to be send to the webagent as response.
+ */
 template <typename T>
 std::shared_ptr<PublicKeyCredentialCreationOptions>
 Webauthn<T>::beginRegistration(std::string &username) {
@@ -69,6 +81,15 @@ Webauthn<T>::beginRegistration(std::string &username) {
   return ret;
 }
 
+/**
+ * @brief This method has to be called after beginRegister. Else the method is
+ * going to fail.
+ *
+ * @tparam T The type is of base class CredentialRecord
+ * @param v A pointer to JSON of type PublicKeyCredential. See:
+ * https://w3c.github.io/webauthn/#publickeycredential
+ * @return std::shared_ptr<T> A pointer to with filled attributes
+ */
 template <typename T>
 std::shared_ptr<T>
 Webauthn<T>::finishRegistration(std::shared_ptr<Json::Value> v) {
