@@ -14,7 +14,7 @@ protected:
   std::vector<std::uint8_t> clientDataJSON;
 
 public:
-  AuthenticatorResponse() = delete;
+  AuthenticatorResponse();
   AuthenticatorResponse(std::vector<std::uint8_t> &&clientDataJSON);
   ~AuthenticatorResponse();
 };
