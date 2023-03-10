@@ -106,7 +106,7 @@ void AuthenticatorAttestationResponse::fromJson(
     free(buf);
   }
 
-  LOG(INFO) << "Search after the bytefield authData inside of the cbor";
+  LOG(INFO) << "Search for the bytefield authData inside of the cbor";
   // Field authData
   err = cbor_value_map_find_value(&map, "authData", &cval);
   if (err != CborNoError) {
