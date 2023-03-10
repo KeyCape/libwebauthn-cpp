@@ -1,12 +1,17 @@
 #pragma once
 #include "AuthenticatorResponse.h"
+#include "AuthenticatorData.h"
 #include "IJsonDeserialize.h"
 #include <algorithm>
+#include <cbor.h>
+#include <cstdint>
+#include <glog/logging.h>
+#include <jsoncpp/json/reader.h>
+#include <jsoncpp/json/value.h>
 #include <string>
 #include <vector>
-#include <cstdint>
-#include <jsoncpp/json/value.h>
-#include <jsoncpp/json/reader.h>
+#include <bitset>
+#include <openssl/sha.h>
 
 /**
  * @brief The AuthenticatorAttestationResponse interface represents the
@@ -19,6 +24,9 @@
 class AuthenticatorAttestationResponse : public AuthenticatorResponse {
 protected:
   std::vector<uint8_t> attestationObject;
+  std::shared_ptr<std::string>
+      fmt; // Format could be "packed" or "none" if no attestation is required
+  std::shared_ptr<AuthenticatorData> authData;
 
 public:
   AuthenticatorAttestationResponse();
