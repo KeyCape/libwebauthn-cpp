@@ -80,4 +80,9 @@ PublicKeyCredentialCreationOptions::getPublicKeyCredentialParameters() const {
   return this->pubKeyCredParams;
 }
 
+const std::shared_ptr<PublicKeyCredentialUserEntity>
+PublicKeyCredentialCreationOptions::getPublicKeyCredentialUserEntity() const {
+  return this->user;
+}
+
 PublicKeyCredentialCreationOptions::~PublicKeyCredentialCreationOptions() {}

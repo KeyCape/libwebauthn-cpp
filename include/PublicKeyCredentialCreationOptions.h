@@ -42,5 +42,6 @@ public:
   static std::shared_ptr<PublicKeyCredentialCreationOptions> fromJson(std::shared_ptr<Json::Value> json);
   const std::shared_ptr<Challenge>getChallenge() const;
   const std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>> getPublicKeyCredentialParameters() const;
+  const std::shared_ptr<PublicKeyCredentialUserEntity> getPublicKeyCredentialUserEntity() const;
   ~PublicKeyCredentialCreationOptions();
 };
