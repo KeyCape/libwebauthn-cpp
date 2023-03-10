@@ -1,4 +1,5 @@
 #pragma once
+#include "AuthenticatorAssertionResponse.h"
 #include "Base64Url.h"
 #include "PublicKeyCredential.h"
 #include "PublicKeyCredentialCreationOptions.h"
@@ -22,6 +23,7 @@ private:
       "none", "packed"}; // A vector which contains the allowed attestation
                          // statement formats.
   std::shared_ptr<unsigned long> timeout;
+  bool flag_user_verified = false;
   std::shared_ptr<UserVerificationRequirement> userVerification;
   std::shared_ptr<AttestationConveyancePreference> attestation;
 
@@ -50,6 +52,11 @@ public:
       std::shared_ptr<Json::Value> request);
   std::shared_ptr<PublicKeyCredentialRequestOptions>
   beginLogin(std::shared_ptr<std::forward_list<CredentialRecord>> user);
+  void finishLogin(
+      std::shared_ptr<PublicKeyCredential<AuthenticatorAssertionResponse>>
+          pKeyCred,
+      std::shared_ptr<PublicKeyCredentialRequestOptions> pkeyCredReq,
+      std::shared_ptr<std::forward_list<CredentialRecord>> credRec);
   void setRpId(std::string &id);
   void setRpName(std::string &id);
   ~Webauthn();
@@ -135,7 +142,7 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   }
   auto ret = std::make_shared<T>();
 
-  PublicKeyCredential pkeyCred;
+  PublicKeyCredential<AuthenticatorAttestationResponse> pkeyCred;
   // Parse the json
   pkeyCred.fromJson(request);
   auto response = pkeyCred.getResponse();
@@ -369,6 +376,212 @@ std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
   return std::make_shared<PublicKeyCredentialRequestOptions>(
       challenge, this->timeout, this->rp_id, allowCredentials,
       this->userVerification, this->attestation, nullptr);
+}
+
+/**
+ * @brief This method is called in order to finish the login cermony.
+ *
+ * See: https://w3c.github.io/webauthn/#sctn-verifying-assertion §7.2
+ * Starting from §7.2.3
+ *
+ * @tparam T The type is of base class CredentialRecord
+ * @param pKeyCred The response of the client
+ * @param pkeyCredReq The response from webauthn<T>::beginLogin(..)
+ * @param credRec The users credential record
+ */
+template <typename T>
+void Webauthn<T>::finishLogin(
+    std::shared_ptr<PublicKeyCredential<AuthenticatorAssertionResponse>>
+        pKeyCred,
+    std::shared_ptr<PublicKeyCredentialRequestOptions> pkeyCredReq,
+    std::shared_ptr<std::forward_list<CredentialRecord>> credRec) {
+  LOG(INFO) << "Finish the credential authentication ceremony";
+
+  // Notice that this if-expression does not apply to credRec. See below: §7.2.6
+  if (!pKeyCred || !pkeyCredReq) {
+    throw std::invalid_argument{"Neither pKeyCred nor pkeyCredReq can be NULL"};
+  }
+  if (!credRec || credRec->empty()) {
+    throw std::invalid_argument{"Missing CredentialRecord"};
+  }
+
+  LOG(INFO) << "Check if there has been provided credential ids to be used by "
+               "the client";
+  auto allowCredentials = pkeyCredReq->getAllowedCredentials();
+  auto reqId = pKeyCred->getId();
+  auto authenticatorAssertionResponse = pKeyCred->getResponse();
+  if (!authenticatorAssertionResponse) {
+    throw std::invalid_argument{
+        "Missing AuthenticatorAssertionResponse. Check whether the "
+        "response field is provided or not."};
+  }
+
+  // §7.2.5 If options.allowCredentials is not empty, verify that credential.id
+  // identifies one of the public key credentials listed in
+  // options.allowCredentials.
+  if (allowCredentials) {
+    LOG(INFO) << "The user has been provided credential IDs";
+    if (!pkeyCredReq->hasCredential(reqId)) {
+      throw std::invalid_argument{
+          "The used credentials id doesn't match the list provided by the RP"};
+    }
+    LOG(INFO) << "Found match for the provided credential id";
+  }
+
+  // §7.2.6 Identify the user being authenticated and let credentialRecord be
+  // the credential record for the credential.
+  // Notice: There are two paths.
+  // 1. The user was identified before the authentication ceremony was
+  // initiated, e.g., via a username or cookie. If this is the case, the
+  // parameter credRec can be NULL. If it's present, then the userHandle is
+  // validated against it.
+  // 2. The user was not identified before the authentication ceremony was
+  // initiated. In this case the credRec must NOT be NULL. CAUTION: In either
+  // case the backend implementation has to do some preparation.
+  // CASE 1: During  beginLogin the client has received a list with
+  // allowedCredentials. Before calling finishLogin fill credRec with the
+  // appropriate credential(List size=1).
+  // CASE 2: The client hasn't received a list with allowdCredentials. The
+  // userHandle specifies the account and the backend fills the list with all
+  // registered credentials for the user account.
+
+  // The identification in both cases is done by the backend and checked here
+  // again(credRec must at least hold one element).
+  LOG(INFO)
+      << "Check if the provided credential id belongs to the user account";
+  auto credRecIt = credRec->cbegin();
+  for (; credRecIt != credRec->cend(); ++credRecIt) {
+    if (credRecIt->id->compare(reqId) == 0) {
+      LOG(INFO) << "The provided credential id belongs to the user account";
+      break;
+    }
+  }
+  if (credRecIt == credRec->cend()) {
+    LOG(WARNING)
+        << "The provided credential id doesn't belong to the user account";
+    throw std::invalid_argument{
+        "The provided credential id doesn't belong to the user account"};
+  }
+
+  LOG(INFO) << "Check if the userHandle is set";
+  auto userHandle = authenticatorAssertionResponse->getUserHandle();
+  if (userHandle && userHandle->compare(*credRecIt->uName) != 0) {
+    LOG(WARNING)
+        << "UserHandle is present. And dosent't  match the user account";
+    DLOG(WARNING) << "The userHandle is " << *userHandle
+                  << " but should have been " << *credRecIt->uName;
+  }
+  // §7.2.10 Verify that the value of C.type is the string webauthn.get.
+  auto cType = authenticatorAssertionResponse->getType();
+  if (!cType || cType->compare("webauthn.get") != 0) {
+    LOG(WARNING) << "The type of AuthenticatorResponse has to be webauthn.get";
+    DLOG(WARNING)
+        << "The type of AuthenticatorResponse has to be webauthn.get but was "
+        << *cType;
+    throw std::invalid_argument{
+        "The type of respose.type has to be webauthn.get"};
+  }
+
+  // §7.2.11 Verify that the value of C.challenge equals the base64url encoding
+  // of options.challenge.
+  LOG(INFO) << "Verify that the value of C.challenge equals the base64url "
+               "encoding of options.challenge.";
+  auto cChallenge = authenticatorAssertionResponse->getChallenge();
+  auto oChallenge = pkeyCredReq->getChallenge();
+  if (!cChallenge || !oChallenge) {
+    LOG(WARNING) << "Missing one of the challenges";
+    DLOG(WARNING) << "Challenges: cChallenge addr: " << cChallenge
+                  << " oChallenge addr: " << oChallenge;
+    throw std::invalid_argument{"Missing cChallenge or oChallenge"};
+  }
+  if (*oChallenge != *cChallenge) {
+    LOG(WARNING) << "The challenges doesn't match";
+    DLOG(WARNING) << "The challenges doesn't match cChallenge: " << *cChallenge
+                  << " oChallenge: " << *oChallenge;
+    throw std::invalid_argument{"The challenges doesn't match"};
+  }
+
+  // §7.2.12 Verify that the value of C.origin matches the Relying Party's
+  // origin.
+  LOG(INFO)
+      << "Verify that the value of C.origin matches the Relying Party's origin";
+  if (!this->validateOrigin(authenticatorAssertionResponse->getOrigin())) {
+    LOG(WARNING) << "The origin doesn't match the RPs origin";
+    throw std::invalid_argument{"The origin doesn't match the RPs origin"};
+  }
+
+  // §7.2.13 Verify that the rpIdHash in authData is the SHA-256 hash of the RP
+  // ID expected by the Relying Party.
+  LOG(INFO) << "Verify that the rpIdHash in authData is the SHA-256 hash of "
+               "the RP ID expected by the Relying Party";
+  auto authData = authenticatorAssertionResponse->getAuthenticatorData();
+  if (!authData) {
+    LOG(WARNING) << "Missing AuthenticatorData in response";
+    throw std::invalid_argument{"Missing AuthenticatorData in response"};
+  }
+  auto authDataRpIdHash = authData->getRpIdHash();
+  if (!authDataRpIdHash) {
+    LOG(WARNING) << "Missing rpIdHash in AuthenticatorData";
+    throw std::invalid_argument{"Missing rpIdHash in AuthenticatorData"};
+  }
+  if (*authDataRpIdHash != *this->rp_id_hash) {
+    LOG(WARNING)
+        << "The given rpIdHash doesn't match the SHA256 hash of the RPs id";
+    throw std::invalid_argument{
+        "The given rpIdHash doesn't match the SHA256 hash of the RPs id"};
+  }
+
+  // §7.2.14 Verify that the UP(User Present) bit of the flags in authData is
+  // set.
+  auto authDataFlags = authData->getFlags();
+  if (!authDataFlags) {
+    LOG(WARNING) << "Missing flags in AuthenticatorData";
+    throw std::invalid_argument{"Missing flags in AuthenticatorData"};
+  }
+  if (!authDataFlags->test(0)) {
+    LOG(WARNING) << "The User Present flag is false but has to be true";
+    throw std::invalid_argument{
+        "The User Present flag is false but has to be true"};
+  }
+
+  // §7.2.15 If the Relying Party requires user verification for this assertion,
+  // verify that the UV(User Verified) bit of the flags in authData is set.
+  if (this->flag_user_verified && !authDataFlags->test(2)) {
+    LOG(WARNING) << "The RP requires that the User Verification flag is set to "
+                    "true, but it's not";
+    throw std::invalid_argument{"The RP requires that the User Verification "
+                                "flag is set to true, but it's not"};
+  }
+
+  // §7.2.16 If the credential backup state is used as part of Relying Party
+  // business logic or policy, let currentBe and currentBs be the values of the
+  // BE and BS bits, respectively, of the flags in authData. Compare currentBe
+  // and currentBs with credentialRecord.backupEligible and
+  // credentialRecord.backupState and apply Relying Party policy, if any.
+  // TODO: There should be some kind of functors passed as argument during the
+  // initialization of Webauthn.
+  DLOG(INFO) << "CredentialRecord backup eligible: " << credRecIt->be;
+  DLOG(INFO) << "CredentialRecord backup state: " << credRecIt->bs;
+
+  // §7.2.17 Verify that the values of the client extension outputs in
+  // clientExtensionResults and the authenticator extension outputs in the
+  // extensions in authData are as expected, considering the client extension
+  // input values that were given in options.extensions and any specific policy
+  // of the Relying Party regarding unsolicited extensions, i.e., those that
+  // were not specified as part of options.extensions. In the general case, the
+  // meaning of "are as expected" is specific to the Relying Party and which
+  // extensions are in use.
+  // NOTE: This implementation dosen't use extensions
+
+  // §7.2.18 Let hash be the result of computing a hash over the cData using
+  // SHA-256.
+  LOG(INFO) << "Calculating hash(sha256) over clientDataJSON";
+  auto hash =
+      SHA256(authenticatorAssertionResponse->clientDataJSON.data(),
+             authenticatorAssertionResponse->clientDataJSON.size(), NULL);
+  DLOG(INFO) << "SHA256: " << *hash;
+
+
 }
 
 template <typename T> Webauthn<T>::~Webauthn() {}
