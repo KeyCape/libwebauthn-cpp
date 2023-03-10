@@ -1,5 +1,7 @@
 #include "PublicKeyCredentialParameters.h"
 
+PublicKeyCredentialParameters::PublicKeyCredentialParameters() {}
+
 PublicKeyCredentialParameters::PublicKeyCredentialParameters(
     COSEAlgorithmIdentifier &&alg, PublicKeyCredentialType &&type)
     : alg{alg} {

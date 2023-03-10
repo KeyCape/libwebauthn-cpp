@@ -29,6 +29,7 @@ private:
   COSEAlgorithmIdentifier alg;
 
 public:
+  PublicKeyCredentialParameters(); 
   PublicKeyCredentialParameters(
       COSEAlgorithmIdentifier &&alg,
       PublicKeyCredentialType &&type = PublicKeyCredentialType::public_key);
