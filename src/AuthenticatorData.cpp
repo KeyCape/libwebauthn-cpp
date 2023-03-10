@@ -28,6 +28,12 @@ AuthenticatorData::AuthenticatorData(
   LOG(INFO) << "Extract the signCount from authData";
   // The signature counter is a 32-bit unsigned big-endian integer.
   memcpy(&this->signCount, authData.data() + 33, 4);
+  // Convert the big-endian to little-endian
+  if constexpr (std::endian::native != std::endian::big) {
+    LOG(INFO) << "This machine uses little-endian";
+    this->signCount =
+        std::bitset<32>(std::rotr(this->signCount, 24)).to_ulong();
+  }
   DLOG(INFO) << "The signcount is: " << this->signCount;
 
   LOG(INFO) << "Check if the authenticator has added attestedCredentialData";
