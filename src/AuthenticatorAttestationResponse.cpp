@@ -3,9 +3,8 @@
 AuthenticatorAttestationResponse::AuthenticatorAttestationResponse() {}
 
 AuthenticatorAttestationResponse::AuthenticatorAttestationResponse(
-    std::vector<uint8_t> &&attObj, std::vector<uint8_t> &&clientDataJSON)
-    : attestationObject{attObj}, AuthenticatorResponse{
-                                     std::move(clientDataJSON)} {}
+    std::vector<uint8_t> &&attObj, std::shared_ptr<std::string> clientDataJSON)
+    : attestationObject{attObj}, AuthenticatorResponse{clientDataJSON} {}
 
 void AuthenticatorAttestationResponse::fromJson(
     const std::shared_ptr<Json::Value> json) {
@@ -80,7 +79,7 @@ void AuthenticatorAttestationResponse::fromJson(
 
   err = cbor_value_calculate_string_length(&cval, &clen);
   if (err != CborNoError) {
-    throw std::invalid_argument{"Error occured while during the string "
+    throw std::invalid_argument{"Error occured during the string "
                                 "length determination of field fmt"};
   }
 
@@ -160,6 +159,27 @@ void AuthenticatorAttestationResponse::fromJson(
     }
   }
 
+  // Extract the attestationStatement
+  auto cborAttStmt = std::make_shared<CborValue>();
+  err = cbor_value_map_find_value(&map, "attStmt", cborAttStmt.get());
+  if (err != CborNoError) {
+    throw std::invalid_argument{
+        std::string{"Error occured during the find proccess of the attStmt "
+                    "field. CborError: "}
+            .append(cbor_error_string(err))};
+  }
+
+  switch (this->fmt->attStmtFmt) {
+  case AttestationStatementFormatIdentifier::type::fido_u2f:
+    LOG(INFO) << "The attestation statement is of type fido_u2f";
+    this->attStmt = std::make_shared<AttestationStatementFidoU2f>();
+    this->attStmt->extractFromCBOR(cborAttStmt);
+    break;
+  default:
+    LOG(INFO) << "The attestation statement format is not implemented yet";
+    break;
+  }
+
   // Call the overridden method to parse the clientDataJson
   AuthenticatorResponse::fromJson(json);
 }
@@ -171,6 +191,10 @@ AuthenticatorAttestationResponse::getAuthData() const {
 const std::shared_ptr<AttestationStatementFormatIdentifier>
 AuthenticatorAttestationResponse::getFmt() const {
   return this->fmt;
+}
+
+void AuthenticatorAttestationResponse::verifyAttStmt() const {
+  this->attStmt->verify(this->authData, this->clientDataJSON);
 }
 
 AuthenticatorAttestationResponse::~AuthenticatorAttestationResponse() {}

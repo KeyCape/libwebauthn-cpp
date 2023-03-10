@@ -342,7 +342,7 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
     LOG(WARNING) << "The attestation statement format is not allowed";
     DLOG(WARNING) << "The attestation statement format provided by the client "
                      "is not allowed fmt: "
-                  << response->getFmt();
+                  << *response->getFmt()->getString();
     throw std::invalid_argument{
         "The attestation statement format is not allowed"};
   }
@@ -351,6 +351,8 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // valid attestation signature, by using the attestation statement format
   // fmt’s verification procedure given attStmt, authData and hash.
   // TODO
+  LOG(INFO) << "Verify that the attestation statement is valid";
+  response->verifyAttStmt();
 
   // §7.1.21 If validation is successful, obtain a list of acceptable trust
   // anchors (i.e. attestation root certificates) for that attestation type and
@@ -641,10 +643,10 @@ std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
 
   // §7.2.18 Let hash be the result of computing a hash over the cData using
   // SHA-256.
+  auto clientDataJSON = authenticatorAssertionResponse->getClientDataJSON();
   unsigned char *hash = (unsigned char *)std::malloc(32);
-  mbedtls_sha256(authenticatorAssertionResponse->clientDataJSON.data(),
-                 authenticatorAssertionResponse->clientDataJSON.size(), hash,
-                 0);
+  mbedtls_sha256(reinterpret_cast<uint8_t *>(clientDataJSON->data()),
+                 clientDataJSON->size(), hash, 0);
   auto sigData = std::make_shared<std::vector<unsigned char>>(
       *authenticatorAssertionResponse->getAuthenticatorData()->getAuthData());
   for (int i = 0; i < 32; ++i) {

@@ -3,7 +3,7 @@
 AuthenticatorResponse::AuthenticatorResponse() {}
 
 AuthenticatorResponse::AuthenticatorResponse(
-    std::vector<std::uint8_t> &&clientDataJSON)
+    std::shared_ptr<std::string> clientDataJSON)
     : clientDataJSON{clientDataJSON} {}
 
 void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
@@ -20,16 +20,22 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
   } else {
     throw std::invalid_argument{"Missing key: response"};
   }
-  std::string tmp = (*json)["response"]["clientDataJSON"].asString();
-  DLOG(INFO) << "clientDataJSON: " << tmp;
 
+  if (this->clientDataJSON) {
+    this->clientDataJSON.reset(new std::string{});
+    LOG(INFO) << "clientDataJSON already exists";
+  } else {
+    this->clientDataJSON = std::make_shared<std::string>();
+  }
 
-  LOG(INFO) << "Decode clientDataJSON";
   // Decode clientDataJSON
-  std::string decodedJson = drogon::utils::base64Decode(tmp);
+  std::string decodedJson = drogon::utils::base64Decode(
+      (*json)["response"]["clientDataJSON"].asString());
 
-  std::transform(decodedJson.begin(), decodedJson.end(), std::back_inserter(this->clientDataJSON),
+  std::transform(decodedJson.cbegin(), decodedJson.cend(),
+                 std::back_inserter(*this->clientDataJSON),
                  [](const auto &t) { return t; });
+
   LOG(INFO) << "Parse the decoded object to JSON";
   std::string err;
   Json::Value clientDataJSON;
@@ -48,9 +54,12 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
 
   std::string tmpChallengeStr = clientDataJSON["challenge"].asString();
   if (this->challenge) {
-    this->challenge.reset(new Challenge{std::make_shared<std::vector<uint8_t>>(tmpChallengeStr.begin(), tmpChallengeStr.end())});
+    this->challenge.reset(new Challenge{std::make_shared<std::vector<uint8_t>>(
+        tmpChallengeStr.begin(), tmpChallengeStr.end())});
   } else {
-    this->challenge = std::make_shared<Challenge>(std::make_shared<std::vector<uint8_t>>(tmpChallengeStr.begin(), tmpChallengeStr.end()));
+    this->challenge =
+        std::make_shared<Challenge>(std::make_shared<std::vector<uint8_t>>(
+            tmpChallengeStr.begin(), tmpChallengeStr.end()));
   }
 
   if (!this->origin) {
@@ -60,7 +69,7 @@ void AuthenticatorResponse::fromJson(const std::shared_ptr<Json::Value> json) {
   *this->type = clientDataJSON["type"].asString();
   *this->origin = clientDataJSON["origin"].asString();
   DLOG(INFO) << "type: " << *this->type << "\tchallenge: " << *this->challenge
-          << "\torigin: " << *this->origin;
+             << "\torigin: " << *this->origin;
 }
 const std::shared_ptr<std::string> AuthenticatorResponse::getType() {
   return this->type;
@@ -70,5 +79,9 @@ const std::shared_ptr<Challenge> AuthenticatorResponse::getChallenge() {
 }
 const std::shared_ptr<std::string> AuthenticatorResponse::getOrigin() {
   return this->origin;
+}
+const std::shared_ptr<std::string>
+AuthenticatorResponse::getClientDataJSON() const {
+  return this->clientDataJSON;
 }
 AuthenticatorResponse::~AuthenticatorResponse() {}
