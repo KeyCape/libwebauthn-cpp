@@ -497,6 +497,7 @@ void Webauthn<T>::finishLogin(
                "encoding of options.challenge.";
   auto cChallenge = authenticatorAssertionResponse->getChallenge();
   auto oChallenge = pkeyCredReq->getChallenge();
+  oChallenge->encodeBase64Url();
   if (!cChallenge || !oChallenge) {
     LOG(WARNING) << "Missing one of the challenges";
     DLOG(WARNING) << "Challenges: cChallenge addr: " << cChallenge

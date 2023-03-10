@@ -27,7 +27,7 @@ std::unique_ptr<Json::Value> Challenge::getJson() {
   // Encode the challenge to base64
   auto tmpStr = std::make_shared<std::string>(
       drogon::utils::base64Encode(str.c_str(), str.size()));
-  Base64Url::encode(tmpStr);
+  //Base64Url::encode(tmpStr);
 
   /* TODO
    * Die Präprozessor DIrektive __cplusplus ist zu alt. Scheinbar existieren
