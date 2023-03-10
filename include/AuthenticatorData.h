@@ -33,5 +33,6 @@ public:
   const std::shared_ptr<std::vector<unsigned char>> getRpIdHash() const;
   const std::shared_ptr<std::bitset<8>> getFlags() const;
   const std::shared_ptr<AttestedCredentialData> getAttestedCredentialData() const;
+  const uint32_t getSignCount() const;
   ~AuthenticatorData();
 };

@@ -51,4 +51,8 @@ AuthenticatorData::getAttestedCredentialData() const {
   return this->attCredData;
 }
 
+const uint32_t AuthenticatorData::getSignCount() const {
+  return this->signCount;
+}
+
 AuthenticatorData::~AuthenticatorData() {}
