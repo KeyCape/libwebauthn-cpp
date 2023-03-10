@@ -25,13 +25,16 @@ std::unique_ptr<Json::Value> Challenge::getJson() {
                                        this->challenge->end()};
 
   // Encode the challenge to base64
+  auto tmpStr = std::make_shared<std::string>(
+      drogon::utils::base64Encode(str.c_str(), str.size()));
+  Base64Url::encode(tmpStr);
 
   /* TODO
    * Die Präprozessor DIrektive __cplusplus ist zu alt. Scheinbar existieren
    * diverse Versionen. Um die Auflösung von boost zu verhindern muss der
    * Compiler auf die neueste Version aktualisiert werden.
    */
-  (*ret) = drogon::utils::base64Encode(str.c_str(), str.size());
+  (*ret) = *tmpStr;
 
   return ret;
 }
@@ -41,7 +44,8 @@ void Challenge::encodeBase64Url() {
 
   Base64Url::encode(tmp);
 
-  this->challenge.reset(new std::vector<unsigned char>{tmp->begin(), tmp->end()});
+  this->challenge.reset(
+      new std::vector<unsigned char>{tmp->begin(), tmp->end()});
 }
 
 Challenge::~Challenge() {}
