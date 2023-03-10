@@ -19,7 +19,7 @@ set(ENABLE_PROGRAMS OFF CACHE INTERNAL "")
 FetchContent_Declare(
   mbedtls
   GIT_REPOSITORY https://github.com/Mbed-TLS/mbedtls.git
-  GIT_TAG        8c89224991adff88d53cd380f42a2baa36f91454 #Mbed TLS 3.3.0
+  GIT_TAG        v3.3.0
 )
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -36,6 +36,8 @@ ExternalProject_Add(
   BUILD_COMMAND make lib/libtinycbor.a
   INSTALL_COMMAND ""
 )
+
+# tinycbor source dir
 ExternalProject_Get_property(tinycbor SOURCE_DIR)
 message("Source dir of tinycbor = ${SOURCE_DIR}")
 
@@ -62,8 +64,11 @@ add_library(webauthn STATIC
     include/AttestedCredentialData.h src/AttestedCredentialData.cpp
     include/PublicKeyCredentialRequestOptions.h src/PublicKeyCredentialRequestOptions.cpp
     include/AuthenticatorAssertionResponse.h src/AuthenticatorAssertionResponse.cpp
-    )
-target_include_directories(webauthn PUBLIC include lib/jsoncons/include ${SOURCE_DIR}/src) #lib/tinycbor/src)
+)
+# Has to be set to add compatibility, so that this project can be added via add_subdirectory()
+add_dependencies(webauthn tinycbor)
+
+target_include_directories(webauthn PUBLIC include lib/jsoncons/include ${SOURCE_DIR}/src)
 
 add_executable(
     webauthn_test
