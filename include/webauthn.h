@@ -187,7 +187,7 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
                "origin.";
   if (!this->validateOrigin(response->getOrigin())) {
     LOG(WARNING) << "The origin received origin is: " << *response->getOrigin()
-                 << " but should have been: " << this->rp_id;
+                 << " but should have been: " << *this->rp_id;
     throw std::invalid_argument{
         "The origin received doesn't match with the relying party"};
   }
@@ -317,6 +317,7 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // §7.1.23 Verify that the credentialId is ≤ 1023 bytes. Credential IDs larger
   // than this many bytes SHOULD cause the RP to fail this registration
   // ceremony.
+  LOG(INFO) << "Verify that the credentialId is ≤ 1023 bytes";
   auto attCredData = responseAuthData->getAttestedCredentialData();
   if (attCredData->getCredentialIdLength() > 1023) {
     LOG(WARNING) << "The length of the credential id has to be <= 1023";
