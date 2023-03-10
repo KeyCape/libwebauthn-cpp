@@ -109,6 +109,7 @@ enum COSEKeyType {
 struct PublicKey {
   COSEKeyType kty;             // Identification of the key type
   COSEAlgorithmIdentifier alg; // Key usage restriction to this algorithm
+  virtual ~PublicKey() {}
 };
 
 /**
@@ -119,6 +120,7 @@ struct PublicKey {
  */
 struct PublicKeyEC2 : public PublicKey {
   PublicKeyEC2() { this->kty = COSEKeyType::EC2; }
+  virtual ~PublicKeyEC2() {}
   int crv; // EC identifier -- Taken from the "COSE Elliptic Curves" registry
   std::vector<char> x; // x-coordinate
   std::vector<char> y; // y-coordinate
