@@ -13,7 +13,7 @@
  * The extensions attribute unsued.
  *
  */
-class PublicKeyCredentialCreationOptions {
+class PublicKeyCredentialCreationOptions : IJsonSerialize {
 private:
   std::shared_ptr<PublicKeyCredentialRpEntity> rp;
   std::shared_ptr<PublicKeyCredentialUserEntity> user;
@@ -37,5 +37,6 @@ public:
       std::shared_ptr<Challenge> &challenge,
       std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
           &pubKeyCredParams);
+  virtual std::unique_ptr<Json::Value> getJson() override;
   ~PublicKeyCredentialCreationOptions();
 };
