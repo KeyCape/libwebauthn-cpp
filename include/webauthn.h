@@ -438,7 +438,7 @@ std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
 
   return std::make_shared<PublicKeyCredentialRequestOptions>(
       challenge, this->policy->timeout, this->rp_id, allowCredentials,
-      this->policy->userVerification, this->policy->attestation, nullptr);
+      this->policy->userVerification, this->policy->attestation, this->policy->attStmtFmts);
 }
 
 /**
@@ -652,7 +652,6 @@ std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
   for (int i = 0; i < 32; ++i) {
     sigData->push_back(hash[i]);
   }
-  free(hash);
 
   DLOG(INFO) << "SHA256: " << [&]() {
     std::stringstream ss;
@@ -661,6 +660,8 @@ std::forward_list<CredentialRecord>::iterator Webauthn<T>::finishLogin(
     }
     return ss.str();
   }();
+
+  free(hash);
 
   // §7.2.19 Using credentialRecord.publicKey, verify that sig is a valid
   // signature over the binary concatenation of authData and hash.

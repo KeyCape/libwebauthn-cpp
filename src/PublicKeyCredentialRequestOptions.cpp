@@ -7,7 +7,7 @@ PublicKeyCredentialRequestOptions::PublicKeyCredentialRequestOptions(
         allowCredentials,
     std::shared_ptr<UserVerificationRequirement> userVerification,
     std::shared_ptr<AttestationConveyancePreference> attestation,
-    std::shared_ptr<std::forward_list<std::string>> attestationFormats)
+    std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>> attestationFormats)
     : challenge{challenge}, rpId{rpId}, allowCredentials{allowCredentials},
       userVerification{userVerification}, attestation{attestation},
       attestationFormats{attestationFormats} {}
@@ -30,6 +30,30 @@ std::unique_ptr<Json::Value> PublicKeyCredentialRequestOptions::getJson() {
       jsonCred.append(*i.getJson());
     }
     (*val)["allowCredentials"] = std::move(jsonCred);
+  }
+  if (this->userVerification) {
+    switch (*this->userVerification) {
+    case preferred:
+      (*val)["userVerification"] = "preferred";
+      break;
+    case discouraged:
+      (*val)["userVerification"] = "discouraged";
+      break;
+    case required:
+      (*val)["userVerification"] = "required";
+      break;
+    }
+  }
+  if (this->attestation) {
+    (*val)["attestation"] = *this->attestation->getString();
+  }
+  if (this->attestationFormats) {
+    Json::Value jsonForm(Json::arrayValue);
+
+    for (auto i : *this->attestationFormats) {
+      jsonForm.append(*i.getString());
+    }
+    (*val)["attestationFormats"] = jsonForm;
   }
 
   return val;
@@ -104,12 +128,12 @@ PublicKeyCredentialRequestOptions::fromJson(
     }
   }
 
-  std::shared_ptr<std::forward_list<std::string>> attestationFormats;
+  std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>> attestationFormats;
   if (json->isMember("attestationFormats")) {
     if ((*json)["attestationFormats"].isArray()) {
-      attestationFormats = std::make_shared<std::forward_list<std::string>>();
+      attestationFormats = std::make_shared<std::forward_list<AttestationStatementFormatIdentifier>>();
       for (auto &i : (*json)["attestationFormats"]) {
-        attestationFormats->emplace_front(i.as<std::string>());
+        attestationFormats->emplace_front(AttestationStatementFormatIdentifier{i.as<std::string>()});
       }
     }
   }

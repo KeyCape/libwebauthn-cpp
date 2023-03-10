@@ -78,6 +78,9 @@ add_executable(
     webauthn_test
     gtest/test_PublicKeyCredential.cpp
     gtest/test_AuthenticatorResponse.cpp
+    gtest/test_AuthenticatorAttestationResponse.cpp
+    gtest/test_AttestationStatementFidoU2f.cpp
+    gtest/test_PublicKeyCredentialCreationOptions.cpp
 )
 
 target_link_libraries(

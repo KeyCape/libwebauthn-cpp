@@ -4,6 +4,7 @@
 #include "IJsonDeserialize.h"
 #include "IJsonSerialize.h"
 #include "PublicKeyCredentialDescriptor.h"
+#include <AttestationStatementFormatIdentifier.h>
 #include <forward_list>
 #include <memory>
 #include <string>
@@ -34,7 +35,7 @@ private:
       allowCredentials;
   std::shared_ptr<UserVerificationRequirement> userVerification;
   std::shared_ptr<AttestationConveyancePreference> attestation;
-  std::shared_ptr<std::forward_list<std::string>> attestationFormats;
+  std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>> attestationFormats;
 
   // Note: AuthenticationExtensionsClientInputs extensions; is not defined,
   // because it's not used here.
@@ -48,7 +49,7 @@ public:
           allowCredentials,
       std::shared_ptr<UserVerificationRequirement> userVerification,
       std::shared_ptr<AttestationConveyancePreference> attestation,
-      std::shared_ptr<std::forward_list<std::string>> attestationFormats);
+      std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>> attestationFormats);
   virtual std::unique_ptr<Json::Value> getJson() override;
   static std::shared_ptr<PublicKeyCredentialRequestOptions>
   fromJson(const std::shared_ptr<Json::Value> json);
