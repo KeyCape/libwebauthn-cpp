@@ -8,6 +8,8 @@
  *
  * This enumeration is used to restrict the algorithm kobinations used by the
  * client.
+ * 
+ * See: https://www.iana.org/assignments/cose/cose.xhtml
  *
  */
 enum COSEAlgorithmIdentifier {
@@ -16,9 +18,9 @@ enum COSEAlgorithmIdentifier {
   ES512 = -36,
   EDDSA = -8,
   ED25519 = 6,
-  P256 = 1,
-  P384 = 2,
-  P521 = 3
+  P256 = -37,
+  P384 = -38,
+  P521 = -39
 };
 
 enum PublicKeyCredentialType { public_key };
