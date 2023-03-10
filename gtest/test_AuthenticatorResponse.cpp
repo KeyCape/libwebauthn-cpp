@@ -4,6 +4,7 @@
 #include <jsoncpp/json/writer.h>
 #include <memory>
 #include <string>
+#include <glog/logging.h>
 
 class AuthenticatorResponseTest : public ::testing::Test {
 protected:
@@ -11,6 +12,7 @@ protected:
   std::shared_ptr<AuthenticatorResponse> ar;
 
   void SetUp() override {
+//    google::InitGoogleLogging("log_dir=log");
     std::string clientDataJSONTmp =
         "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiUUQzajJ2N0FpWHpjRW"
         "1SZmRORVBvUSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3QifQ";
