@@ -1,4 +1,5 @@
 #pragma once
+#include "PublicKeyCredentialCreationOptions.h"
 #include <string>
 
 class Webauthn {
@@ -13,5 +14,16 @@ public:
   /// @param id This is the id of the relying party, which is transfered to the
   /// WebAgent
   Webauthn(std::string &&name, std::string &&id);
+  /**
+   * @brief This method returns the PublicKeyCredentialCreationOptions object,
+   * which is requested by the client, to register a new Credential
+   *
+   * @param username The username of the user. This parameter is usally assigned
+   * by the client.
+   * @return std::shared_ptr<PublicKeyCredentialCreationOptions> Is returned to
+   * the client.
+   */
+  std::shared_ptr<PublicKeyCredentialCreationOptions>
+  beginRegistration(std::string &username);
   ~Webauthn();
 };
