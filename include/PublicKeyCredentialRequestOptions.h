@@ -58,5 +58,9 @@ public:
       std::shared_ptr<AttestationConveyancePreference> attestation,
       std::shared_ptr<std::forward_list<std::string>> attestationFormats);
   virtual std::unique_ptr<Json::Value> getJson() override;
+  const std::shared_ptr<std::forward_list<PublicKeyCredentialDescriptor>>
+  getAllowedCredentials();
+  const std::shared_ptr<Challenge> getChallenge();
+  bool hasCredential(const std::string &id) const;
   ~PublicKeyCredentialRequestOptions();
 };

@@ -35,4 +35,24 @@ std::unique_ptr<Json::Value> PublicKeyCredentialRequestOptions::getJson() {
   return val;
 }
 
+const std::shared_ptr<std::forward_list<PublicKeyCredentialDescriptor>>
+PublicKeyCredentialRequestOptions::getAllowedCredentials() {
+  return this->allowCredentials;
+}
+
+const std::shared_ptr<Challenge>
+PublicKeyCredentialRequestOptions::getChallenge() {
+  return this->challenge;
+}
+
+bool PublicKeyCredentialRequestOptions::hasCredential(
+    const std::string &id) const {
+  for (const auto &i : *this->allowCredentials) {
+    if (i.id.compare(id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 PublicKeyCredentialRequestOptions::~PublicKeyCredentialRequestOptions() {}
