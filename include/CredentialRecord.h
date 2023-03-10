@@ -1,11 +1,13 @@
 #pragma once
 #include "PublicKeyCredentialParameters.h"
+#include "AttestedCredentialData.h"
 
 class CredentialRecord {
 protected:
   PublicKeyCredentialType type;
   std::string id;
   uint32_t signCount;
+  std::shared_ptr<PublicKey> publicKey;
   //! Backup eligible
   /*! https://w3c.github.io/webauthn/#backup-eligibility*/
   bool be;
