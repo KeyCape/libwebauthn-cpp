@@ -10,12 +10,12 @@ PublicKeyCredentialCreationOptions::PublicKeyCredentialCreationOptions(
 
     : rp{rp}, user{user}, challenge{challenge} {}
 std::unique_ptr<Json::Value> PublicKeyCredentialCreationOptions::getJson() {
-    auto ret = std::make_unique<Json::Value>(Json::arrayValue);
+  auto ret = std::make_unique<Json::Value>(Json::objectValue);
 
-    ret->append(*this->rp->getJson());
-    ret->append(*this->user->getJson());
-    ret->append(*this->challenge->getJson());
-    // TODO Add pubKeyCredParams
-    return ret;
+  (*ret)["rp"] = *this->rp->getJson();
+  (*ret)["user"] = *this->user->getJson();
+  (*ret)["challenge"] = *this->challenge->getJson();
+  // TODO Add pubKeyCredParams
+  return ret;
 }
 PublicKeyCredentialCreationOptions::~PublicKeyCredentialCreationOptions() {}
