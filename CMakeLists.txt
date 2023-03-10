@@ -47,6 +47,7 @@ add_library(webauthn STATIC
     include/webauthn.h
     include/IJsonSerialize.h
     include/IJsonDeserialize.h
+    include/IAttestationStatement.h
     include/PublicKeyCredentialEntity.h src/PublicKeyCredentialEntity.cpp 
     include/PublicKeyCredentialUserEntity.h src/PublicKeyCredentialUserEntity.cpp
     include/PublicKeyCredentialCreationOptions.h src/PublicKeyCredentialCreationOptions.cpp
@@ -66,6 +67,7 @@ add_library(webauthn STATIC
     include/AuthenticatorAssertionResponse.h src/AuthenticatorAssertionResponse.cpp
     include/AttestationConveyancePreference.h src src/AttestationConveyancePreference.cpp
     include/AttestationStatementFormatIdentifier.h src/AttestationStatementFormatIdentifier.cpp
+    include/AttestationStatementFidoU2f.h src/AttestationStatementFidoU2f.cpp
 )
 # Has to be set to add compatibility, so that this project can be added via add_subdirectory()
 add_dependencies(webauthn tinycbor)
