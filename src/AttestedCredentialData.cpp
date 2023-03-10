@@ -332,6 +332,7 @@ void AttestedCredentialData::storePublicKeyEC2(CborValue &map) {
         throw std::runtime_error{"An unexpected error occured"};
       }
     }
+    this->pkey = pkPtr;
   }
 
   // Check if all fields were found
@@ -341,4 +342,9 @@ void AttestedCredentialData::storePublicKeyEC2(CborValue &map) {
   }
   LOG(INFO) << "Cipher field status check passed";
 }
+
+const std::shared_ptr<PublicKey> AttestedCredentialData::getPublicKey() const {
+  return this->pkey;
+}
+
 AttestedCredentialData::~AttestedCredentialData() {}

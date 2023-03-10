@@ -30,6 +30,7 @@ private:
 
 public:
   AttestedCredentialData(const std::vector<unsigned char> &attCredData);
+  const std::shared_ptr<PublicKey> getPublicKey() const;
   ~AttestedCredentialData();
 };
 
