@@ -6,6 +6,7 @@
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
 #include <forward_list>
+#include <algorithm>
 
 /**
  * @brief https://w3c.github.io/webauthn/#dictionary-makecredentialoptions
