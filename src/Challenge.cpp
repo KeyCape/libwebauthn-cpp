@@ -35,5 +35,28 @@ std::unique_ptr<Json::Value> Challenge::getJson() {
 
   return ret;
 }
+void Challenge::encodeBase64Url() {
+  auto tmp = std::make_shared<std::string>(this->challenge->begin(),
+                                           this->challenge->end());
+
+  Base64Url::encode(tmp);
+
+  this->challenge.reset(new std::vector<unsigned char>{tmp->begin(), tmp->end()});
+}
 
 Challenge::~Challenge() {}
+
+std::ostream &operator<<(std::ostream &os, Challenge &obj) {
+  for (auto &item : *obj.getChallenge()) {
+    os << item;
+  }
+  return os;
+}
+bool operator==(Challenge &lhs, Challenge &rhs) {
+  auto lPtr = lhs.getChallenge();
+  auto rPtr = rhs.getChallenge();
+  if (lPtr && rPtr) {
+    return *lPtr == *rPtr;
+  }
+  return false;
+}
