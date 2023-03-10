@@ -33,8 +33,9 @@ TEST_F(AuthenticatorResponseTest, CheckTypeInterpretation) {
 }
 
 TEST_F(AuthenticatorResponseTest, CheckChallengeInterpretation) {
-  ASSERT_EQ(*this->ar->getChallenge(), std::string{"QD3j2v7AiXzcEmRfdNEPoQ"})
-      << "Wrong challenge";
+  auto challengePtr = this->ar->getChallenge()->getChallenge();
+  auto challenge = std::string{"QD3j2v7AiXzcEmRfdNEPoQ"};
+  ASSERT_TRUE(std::equal(challengePtr->begin(), challengePtr->end(), challenge.begin(), challenge.end())) << "Wrong challenge";
 }
 
 TEST_F(AuthenticatorResponseTest, CheckOriginInterpretation) {
