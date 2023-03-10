@@ -5,9 +5,6 @@
 #include "PublicKeyCredentialParameters.h"
 #include "PublicKeyCredentialRpEntity.h"
 #include "PublicKeyCredentialUserEntity.h"
-#include "jsoncons/json.hpp"
-#include "jsoncons_ext/cbor/decode_cbor.hpp"
-#include "jsoncons_ext/jsonpath/jsonpath.hpp"
 #include <glog/logging.h>
 #include <string>
 #include <type_traits>
