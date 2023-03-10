@@ -1,9 +1,16 @@
 #pragma once
+#include <bitset>
+#include <memory>
+#include <random>
 
-class Challenge
-{
+#define BYTE_LEN 16
+
+class Challenge {
 private:
+  std::shared_ptr<std::vector<char>> challenge;
+
 public:
-    Challenge();
-    ~Challenge();
+  Challenge();
+  std::shared_ptr<std::vector<char>> getChallenge();
+  ~Challenge();
 };
