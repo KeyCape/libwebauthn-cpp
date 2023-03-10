@@ -1,0 +1,47 @@
+---
+kind: pipeline
+type: docker
+name: testing
+
+steps:
+  - name: pull submodules
+    image: alpine/git
+    commands:
+      - git submodule update --init --recursive
+  - name: test
+    image: docker.ogkw.de/master-thesis/libwebauthn-cpp:buildenv
+    commands:
+      - mkdir -p build
+      - cd build
+      - cmake ..
+      - make
+      - ctest
+trigger:
+  event:
+    - push
+  branch:
+    - master
+---
+kind: pipeline
+type: docker
+name: build environment
+
+steps:
+- name: docker build image
+  image: plugins/docker
+  environment:
+    GIT_TOKEN:
+      from_secret: GIT_TOKEN
+  settings:
+    repo: docker.ogkw.de/master-thesis/libwebauthn-cpp
+    registry: docker.ogkw.de
+    tags: buildenv
+    dockerfile: .docker/Dockerfile
+    purge: true
+    build_args_from_env:
+      - GIT_TOKEN
+trigger:
+  event:
+    - custom
+  branch:
+    - master
