@@ -6,5 +6,6 @@ add_library(webauthn STATIC
     include/IJsonSerialize.h
     include/PublicKeyCredentialEntity.h src/PublicKeyCredentialEntity.cpp 
     include/PublicKeyCredentialUserEntity.h src/PublicKeyCredentialUserEntity.cpp
+    include/PublicKeyCredentialCreationOptions.h src/PublicKeyCredentialCreationOptions.cpp
     )
 target_include_directories(webauthn PUBLIC include)
