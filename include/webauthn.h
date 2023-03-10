@@ -9,6 +9,11 @@
 #include "PublicKeyCredentialUserEntity.h"
 #include <CredentialRecord.h>
 #include <glog/logging.h>
+#include <iomanip>
+#include <mbedtls/ecdsa.h>
+#include <mbedtls/ecp.h>
+#include <mbedtls/error.h>
+#include <mbedtls/sha256.h>
 #include <openssl/sha.h>
 #include <string>
 #include <type_traits>
@@ -451,6 +456,8 @@ void Webauthn<T>::finishLogin(
       << "Check if the provided credential id belongs to the user account";
   auto credRecIt = credRec->cbegin();
   for (; credRecIt != credRec->cend(); ++credRecIt) {
+    DLOG(INFO) << "Comparing credential id:\t" << *credRecIt->id << " with:\t"
+               << reqId;
     if (credRecIt->id->compare(reqId) == 0) {
       LOG(INFO) << "The provided credential id belongs to the user account";
       break;
@@ -576,12 +583,81 @@ void Webauthn<T>::finishLogin(
   // §7.2.18 Let hash be the result of computing a hash over the cData using
   // SHA-256.
   LOG(INFO) << "Calculating hash(sha256) over clientDataJSON";
-  auto hash =
-      SHA256(authenticatorAssertionResponse->clientDataJSON.data(),
-             authenticatorAssertionResponse->clientDataJSON.size(), NULL);
-  DLOG(INFO) << "SHA256: " << *hash;
+  LOG(INFO) << "clientDataJSON len: " <<  authenticatorAssertionResponse->clientDataJSON.size();
+  LOG(INFO) << "authenticatorData len: " <<  authenticatorAssertionResponse->getAuthenticatorData()->getAuthData()->size();
+  unsigned char *hash = (unsigned char *)std::malloc(32);
+  mbedtls_sha256(authenticatorAssertionResponse->clientDataJSON.data(),
+                 authenticatorAssertionResponse->clientDataJSON.size(), hash,
+                 0);
+  auto sigData = std::vector<unsigned char>{
+      *authenticatorAssertionResponse->getAuthenticatorData()->getAuthData()};
+  for (int i = 0; i < 32; ++i) {
+    sigData.push_back(hash[i]);
+  }
+  mbedtls_sha256(sigData.data(), sigData.size(), hash, 0);
 
+  DLOG(INFO) << "SHA256: " << [&]() {
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+      ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    }
+    return ss.str();
+  }();
 
+  //bool sequence = (*authenticatorAssertionResponse->getSignature())[0] == 0x30;
+  //LOG(INFO) << "The signature format is SEQUENCE: " << sequence;
+  //LOG(INFO) << "Signature size: "
+  //          << authenticatorAssertionResponse->getSignature()->size();
+
+  LOG(INFO) << "Build the public key binary";
+  std::vector<unsigned char> pkBin;
+  pkBin.push_back(0x04);
+
+  std::shared_ptr<PublicKeyEC2> pkPtr =
+      static_pointer_cast<PublicKeyEC2>(credRecIt->publicKey);
+  pkBin.insert(pkBin.cend(), pkPtr->x.cbegin(), pkPtr->x.cend());
+  pkBin.insert(pkBin.cend(), pkPtr->y.cbegin(), pkPtr->y.cend());
+
+  DLOG(INFO) << "Public key length: " << pkBin.size();
+
+  // Verify secp256r1
+  mbedtls_ecdsa_context ctx_verify;
+  mbedtls_ecdsa_init(&ctx_verify);
+  mbedtls_ecp_group_init(&ctx_verify.private_grp);
+  mbedtls_ecp_point_init(&ctx_verify.private_Q);
+
+  LOG(INFO) << "Load elliptic curve group";
+  int errc = 0;
+  if ((errc = mbedtls_ecp_group_load(&ctx_verify.private_grp,
+                                     MBEDTLS_ECP_DP_SECP256R1)) != 0) {
+    LOG(ERROR) << mbedtls_high_level_strerr(errc);
+    throw std::runtime_error{"Couldnt load mbedtls ecc group"};
+  }
+
+  LOG(INFO) << "Read elliptic curve point from binary";
+  if ((errc = mbedtls_ecp_point_read_binary(&ctx_verify.private_grp,
+                                            &ctx_verify.private_Q, pkBin.data(),
+                                            pkBin.size())) != 0) {
+    LOG(ERROR) << mbedtls_high_level_strerr(errc);
+    throw std::runtime_error{"Couldn't load the public key from binary"};
+  }
+
+  if((errc = mbedtls_ecp_check_pubkey(&ctx_verify.private_grp, &ctx_verify.private_Q)) != 0) {
+    LOG(ERROR) << mbedtls_high_level_strerr(errc);
+    throw std::runtime_error{"Invalid public key"};
+  } 
+
+  auto signature = authenticatorAssertionResponse->getSignature();
+  LOG(INFO) << "Signature size: "
+            << authenticatorAssertionResponse->getSignature()->size();
+
+  LOG(INFO) << "Verify the signature";
+  if ((errc = mbedtls_ecdsa_read_signature(
+           &ctx_verify, hash, 32, signature->data(), signature->size())) != 0) {
+    LOG(ERROR) << mbedtls_high_level_strerr(errc);
+    throw std::runtime_error{"The signature is invalid"};
+  }
+  LOG(INFO) << "The signature is valid";
 }
 
 template <typename T> Webauthn<T>::~Webauthn() {}
