@@ -9,7 +9,7 @@ PublicKeyCredential::PublicKeyCredential(
     : id{id}, type{type}, rawId{rawId}, response{response} {}
 
 void PublicKeyCredential::fromJson(const std::shared_ptr<Json::Value> json) {
-  if (json->isNull()) {
+  if (!json || json->isNull()) {
     throw std::invalid_argument{"Empty json"};
   }
   if (!json->isMember("id")) {
@@ -22,6 +22,7 @@ void PublicKeyCredential::fromJson(const std::shared_ptr<Json::Value> json) {
     throw std::invalid_argument{"Missing key: type"};
   }
 
+  LOG(INFO) << "Device id: "<< this->id << "\ttype: " << this->type;
   this->id = (*json)["id"].asString();
   this->type = (*json)["type"].asString();
   std::string rawIdTemp = (*json)["rawId"].asString();
