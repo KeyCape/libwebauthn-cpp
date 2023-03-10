@@ -16,12 +16,12 @@
  */
 class AuthenticatorResponse : IJsonDeserialize {
 protected:
-  std::vector<std::uint8_t> clientDataJSON;
   std::shared_ptr<std::string> type;
   std::shared_ptr<Challenge> challenge;
   std::shared_ptr<std::string> origin;
 
 public:
+  std::vector<std::uint8_t> clientDataJSON;
   AuthenticatorResponse();
   AuthenticatorResponse(std::vector<std::uint8_t> &&clientDataJSON);
   const std::shared_ptr<std::string> getType();
