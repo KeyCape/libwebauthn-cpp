@@ -24,13 +24,12 @@ private:
   std::shared_ptr<std::string> rp_name;
   std::shared_ptr<std::string> rp_id;
   std::shared_ptr<std::vector<unsigned char>> rp_id_hash;
-  std::vector<std::string> fmtList = {
-      "none", "packed"}; // A vector which contains the allowed attestation
-                         // statement formats.
   std::shared_ptr<unsigned long> timeout;
   bool flag_user_verified = false;
-  std::shared_ptr<UserVerificationRequirement> userVerification;
-  std::shared_ptr<AttestationConveyancePreference> attestation;
+  std::shared_ptr<UserVerificationRequirement> userVerification = nullptr;
+  std::shared_ptr<AttestationConveyancePreference> attestation = nullptr;
+  std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>>
+      attSttmtFmts = nullptr;
 
   bool validateOrigin(const std::shared_ptr<std::string> originPtr) const;
 
@@ -71,6 +70,28 @@ template <typename T> Webauthn<T>::Webauthn() {
   static_assert(std::is_base_of_v<CredentialRecord, T>,
                 "The return type of finishRegistration(..) must be a child of "
                 "the class CredentialRecord");
+  if (!this->attSttmtFmts) {
+    LOG(WARNING) << "No AttestationStatementFormatIdentifiers has been "
+                    "specified. Falling back to none";
+    this->attSttmtFmts = std::make_shared<
+        std::forward_list<AttestationStatementFormatIdentifier>>(
+        std::forward_list<AttestationStatementFormatIdentifier>{
+            AttestationStatementFormatIdentifier::none});
+  }
+
+  if (!this->attestation) {
+    LOG(WARNING) << "No AttestationConveyancePreference has been specified. "
+                    "Falling back to none";
+    this->attestation = std::make_shared<AttestationConveyancePreference>(
+        AttestationConveyancePreference::none);
+  }
+
+  if (!this->userVerification) {
+    LOG(WARNING) << "No UserVerificationRequirement has been specified. "
+                    "Falling back to preferred";
+    this->userVerification = std::make_shared<UserVerificationRequirement>(
+        UserVerificationRequirement::preferred);
+  }
 }
 
 template <typename T>
@@ -115,7 +136,7 @@ Webauthn<T>::beginRegistration(std::string &username) {
                PublicKeyCredentialParameters{COSEAlgorithmIdentifier::ES256}}));
 
   auto ret = std::make_shared<PublicKeyCredentialCreationOptions>(
-      rp, user, challenge, params);
+      rp, user, challenge, params, this->attSttmtFmts, this->attestation);
 
   return ret;
 }
@@ -286,12 +307,12 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // registry [IANA-WebAuthn-Registries] established by [RFC8809].
   LOG(INFO) << "Verify that attestation statement format provided by the "
                "client is allowed";
-  if (std::find(this->fmtList.cbegin(), this->fmtList.cend(),
-                *response->getFmt()) == this->fmtList.cend()) {
+  if (std::find(this->attSttmtFmts->cbegin(), this->attSttmtFmts->cend(),
+                *response->getFmt()) == this->attSttmtFmts->cend()) {
     LOG(WARNING) << "The attestation statement format is not allowed";
     DLOG(WARNING) << "The attestation statement format provided by the client "
                      "is not allowed fmt: "
-                  << *response->getFmt();
+                  << response->getFmt();
     throw std::invalid_argument{
         "The attestation statement format is not allowed"};
   }

@@ -99,9 +99,11 @@ void AuthenticatorAttestationResponse::fromJson(
     }
     DLOG(INFO) << "fmt has the value: " << buf;
     if (this->fmt) {
-      this->fmt->assign(buf, clen);
+      this->fmt.reset(
+          new AttestationStatementFormatIdentifier{std::string{buf, clen}});
     } else {
-      this->fmt = std::make_shared<std::string>(buf, clen);
+      this->fmt = std::make_shared<AttestationStatementFormatIdentifier>(
+          std::string{buf, clen});
     }
     free(buf);
   }
@@ -166,7 +168,7 @@ AuthenticatorAttestationResponse::getAuthData() const {
   return this->authData;
 }
 
-const std::shared_ptr<std::string>
+const std::shared_ptr<AttestationStatementFormatIdentifier>
 AuthenticatorAttestationResponse::getFmt() const {
   return this->fmt;
 }

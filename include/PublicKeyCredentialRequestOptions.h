@@ -1,7 +1,8 @@
 #pragma once
+#include "AttestationConveyancePreference.h"
 #include "Challenge.h"
-#include "IJsonSerialize.h"
 #include "IJsonDeserialize.h"
+#include "IJsonSerialize.h"
 #include "PublicKeyCredentialDescriptor.h"
 #include <forward_list>
 #include <memory>
@@ -13,16 +14,6 @@
  * operations but not for others, and may use this type to express its needs.
  */
 enum UserVerificationRequirement { required, preferred, discouraged };
-
-/**
- * @brief https://w3c.github.io/webauthn/#enum-attestation-convey
- *
- * WebAuthn Relying Parties may use AttestationConveyancePreference to specify
- * their preference regarding attestation conveyance during credential
- * generation.
- *
- */
-enum AttestationConveyancePreference { none, indirect, direct, enterprise };
 
 /**
  * @brief https://w3c.github.io/webauthn/#dictionary-assertion-options
@@ -59,7 +50,8 @@ public:
       std::shared_ptr<AttestationConveyancePreference> attestation,
       std::shared_ptr<std::forward_list<std::string>> attestationFormats);
   virtual std::unique_ptr<Json::Value> getJson() override;
-  static std::shared_ptr<PublicKeyCredentialRequestOptions> fromJson(const std::shared_ptr<Json::Value> json);
+  static std::shared_ptr<PublicKeyCredentialRequestOptions>
+  fromJson(const std::shared_ptr<Json::Value> json);
   const std::shared_ptr<std::forward_list<PublicKeyCredentialDescriptor>>
   getAllowedCredentials();
   const std::shared_ptr<Challenge> getChallenge();

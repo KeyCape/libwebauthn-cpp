@@ -6,10 +6,14 @@ PublicKeyCredentialCreationOptions::PublicKeyCredentialCreationOptions(
     std::shared_ptr<PublicKeyCredentialUserEntity> user,
     std::shared_ptr<Challenge> challenge,
     std::shared_ptr<std::forward_list<PublicKeyCredentialParameters>>
-        pubKeyCredParams)
+        pubKeyCredParams,
+    std::shared_ptr<std::forward_list<AttestationStatementFormatIdentifier>>
+        attestationFormats,
+    std::shared_ptr<AttestationConveyancePreference> attestation)
+    : rp{rp}, user{user}, challenge{challenge},
+      pubKeyCredParams{pubKeyCredParams},
+      attestationFormats{attestationFormats}, attestation{attestation} {}
 
-    : rp{rp}, user{user}, challenge{challenge}, pubKeyCredParams{
-                                                    pubKeyCredParams} {}
 std::unique_ptr<Json::Value> PublicKeyCredentialCreationOptions::getJson() {
   auto ret = std::make_unique<Json::Value>(Json::objectValue);
 
@@ -22,6 +26,21 @@ std::unique_ptr<Json::Value> PublicKeyCredentialCreationOptions::getJson() {
     jsonPubKeyCredParams.append(*param.getJson());
   }
   (*ret)["pubKeyCredParams"] = jsonPubKeyCredParams;
+
+  if (this->attestation) {
+    (*ret)["attestation"] = *this->attestation->getString();
+  } else {
+    // Defaulting to none
+    (*ret)["attestation"] = "none";
+  }
+
+  auto jsonAttestationFormats = Json::Value{Json::arrayValue};
+  if (this->attestationFormats) {
+    for (auto &fmt : *this->attestationFormats) {
+      jsonAttestationFormats.append(*fmt.getString());
+    }
+  }
+  (*ret)["attestationFormats"] = jsonAttestationFormats;
   return ret;
 }
 std::shared_ptr<PublicKeyCredentialCreationOptions>
@@ -60,14 +79,31 @@ PublicKeyCredentialCreationOptions::fromJson(
       pubKeyCredParams.begin(), [](const auto &t) {
         return PublicKeyCredentialParameters{
             static_cast<COSEAlgorithmIdentifier>(t["alg"].asInt()),
-            PublicKeyCredentialType::public_key}; // Only "public-key" is
-                                                  // defined by now
+            PublicKeyCredentialType::public_key}; // Only "public-key"
+                                                  // is defined by now
       });
+
+  // Extract the attestation
+  auto attestationJson = (*json)["attestation"].asString();
+  std::shared_ptr<AttestationConveyancePreference> attestation(
+      new AttestationConveyancePreference{attestationJson});
+
+  // Extract the attestationFormats
+  DLOG(INFO) << "Extract the attestationFormats";
+  auto attStmtFmtsJson = (*json)["attestationFormats"];
+  std::forward_list<AttestationStatementFormatIdentifier> attStmtFmts;
+  std::transform(attStmtFmtsJson.begin(), attStmtFmtsJson.end(),
+                 std::front_inserter(attStmtFmts), [](const auto &t) {
+                   return AttestationStatementFormatIdentifier{t.asString()};
+                 });
 
   return std::make_shared<PublicKeyCredentialCreationOptions>(
       pubKeyCredRp, pubKeyCredUser, challenge,
       std::make_shared<std::forward_list<PublicKeyCredentialParameters>>(
-          pubKeyCredParams));
+          pubKeyCredParams),
+      std::make_shared<std::forward_list<AttestationStatementFormatIdentifier>>(
+          attStmtFmts),
+      attestation);
 }
 
 const std::shared_ptr<Challenge>

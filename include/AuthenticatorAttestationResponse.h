@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <glog/logging.h>
 #include <jsoncpp/json/reader.h>
+#include "AttestationStatementFormatIdentifier.h"
 #include <jsoncpp/json/value.h>
 #include <openssl/sha.h>
 #include <string>
@@ -24,7 +25,7 @@
 class AuthenticatorAttestationResponse : public AuthenticatorResponse {
 protected:
   std::vector<uint8_t> attestationObject;
-  std::shared_ptr<std::string>
+  std::shared_ptr<AttestationStatementFormatIdentifier>
       fmt; // Format could be "packed" or "none" if no attestation is required
   std::shared_ptr<AuthenticatorData> authData;
 
@@ -34,6 +35,6 @@ public:
                                    std::vector<uint8_t> &&clientDataJSON);
   virtual void fromJson(const std::shared_ptr<Json::Value> json) override;
   const std::shared_ptr<AuthenticatorData> getAuthData() const;
-  const std::shared_ptr<std::string> getFmt() const;
+  const std::shared_ptr<AttestationStatementFormatIdentifier> getFmt() const;
   ~AuthenticatorAttestationResponse();
 };
