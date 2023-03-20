@@ -336,23 +336,29 @@ std::shared_ptr<T> Webauthn<T>::finishRegistration(
   // registry [IANA-WebAuthn-Registries] established by [RFC8809].
   LOG(INFO) << "Verify that attestation statement format provided by the "
                "client is allowed";
-  if (std::find(this->policy->attStmtFmts->cbegin(),
-                this->policy->attStmtFmts->cend(),
-                *response->getFmt()) == this->policy->attStmtFmts->cend()) {
-    LOG(WARNING) << "The attestation statement format is not allowed";
-    DLOG(WARNING) << "The attestation statement format provided by the client "
-                     "is not allowed fmt: "
-                  << *response->getFmt()->getString();
-    throw std::invalid_argument{
-        "The attestation statement format is not allowed"};
-  }
+  if (this->policy->attStmtFmts->empty()) {
+    LOG(WARNING)
+        << "No attestation statement format has been specified. It's "
+           "recommended to set at least one attestation statement format!";
+  } else {
+    if (std::find(this->policy->attStmtFmts->cbegin(),
+                  this->policy->attStmtFmts->cend(),
+                  *response->getFmt()) == this->policy->attStmtFmts->cend()) {
+      LOG(WARNING) << "The attestation statement format is not allowed";
+      DLOG(WARNING)
+          << "The attestation statement format provided by the client "
+             "is not allowed fmt: "
+          << *response->getFmt()->getString();
+      throw std::invalid_argument{
+          "The attestation statement format is not allowed"};
+    }
 
-  // §7.1.20 Verify that attStmt is a correct attestation statement, conveying a
-  // valid attestation signature, by using the attestation statement format
-  // fmt’s verification procedure given attStmt, authData and hash.
-  // TODO
-  LOG(INFO) << "Verify that the attestation statement is valid";
-  response->verifyAttStmt();
+    // §7.1.20 Verify that attStmt is a correct attestation statement, conveying
+    // a valid attestation signature, by using the attestation statement format
+    // fmt’s verification procedure given attStmt, authData and hash.
+    LOG(INFO) << "Verify that the attestation statement is valid";
+    response->verifyAttStmt();
+  }
 
   // §7.1.21 If validation is successful, obtain a list of acceptable trust
   // anchors (i.e. attestation root certificates) for that attestation type and
@@ -438,7 +444,8 @@ std::shared_ptr<PublicKeyCredentialRequestOptions> Webauthn<T>::beginLogin(
 
   return std::make_shared<PublicKeyCredentialRequestOptions>(
       challenge, this->policy->timeout, this->rp_id, allowCredentials,
-      this->policy->userVerification, this->policy->attestation, this->policy->attStmtFmts);
+      this->policy->userVerification, this->policy->attestation,
+      this->policy->attStmtFmts);
 }
 
 /**
